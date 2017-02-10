@@ -16,6 +16,10 @@
 
 package com.google.demo.analytics.benchmark;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.nio.file.StandardOpenOption.APPEND;
+import static java.nio.file.StandardOpenOption.CREATE;
+
 import com.google.demo.analytics.executor.BigQueryExecutor;
 import com.google.demo.analytics.executor.Executor;
 import com.google.demo.analytics.model.BigQueryUnitResult;
@@ -24,11 +28,18 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class BigQueryBenchmark extends Benchmark<BigQueryUnitResult> {
 
     private Logger logger = LogManager.getLogger();
+
+    private static final String DELIMITER = "|";
 
     private Executor executor;
 
@@ -43,9 +54,33 @@ public class BigQueryBenchmark extends Benchmark<BigQueryUnitResult> {
     }
 
     @Override
-    protected void processResults(List<BigQueryUnitResult> results) {
+    protected void writeToOutput(List<BigQueryUnitResult> results, Path output) throws IOException {
+        String headers = String.join(
+                DELIMITER,
+                "job_id",
+                "status",
+                "label",
+                "duration (ms)",
+                "query",
+                "error_messages");
+
+        Files.write(output, Arrays.asList(headers), UTF_8, APPEND, CREATE);
+
         for(BigQueryUnitResult result : results) {
-            logger.log(Level.INFO, String.format("Duration: %s", result.getDuration()));
+            Files.write(
+                    output,
+                    Arrays.asList(
+                            String.join(
+                                    DELIMITER,
+                                    result.getJobId(),
+                                    result.getStatus().toString(),
+                                    result.getQueryUnit().getLabel(),
+                                    result.getDuration(),
+                                    result.getQueryUnit().getQuery(),
+                                    result.getErrorMessage() == null ? "" : result.getErrorMessage())
+                    ),
+                    UTF_8,
+                    APPEND);
         }
     }
 }

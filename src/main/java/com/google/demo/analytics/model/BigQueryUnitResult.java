@@ -18,35 +18,52 @@ package com.google.demo.analytics.model;
 
 public class BigQueryUnitResult {
 
-    private QueryUnit queryUnit;
-    private double duration;
-    private boolean hasError;
-    private String message;
-
-    public BigQueryUnitResult(QueryUnit queryUnit, double duration) {
-        this.queryUnit = queryUnit;
-        this.duration = duration;
+    public enum Status {
+        SUCCESS,
+        FAIL
     }
 
-    public BigQueryUnitResult(QueryUnit queryUnit, boolean hasError, String message) {
-        this.queryUnit = queryUnit;
-        this.hasError = hasError;
-        this.message = message;
+    private QueryUnit queryUnit;
+    private String jobId;
+    private Status status;
+    private String duration;
+    private String errorMessage;
+
+    public static BigQueryUnitResult createSuccess(QueryUnit queryUnit, String jobId, String duration) {
+        BigQueryUnitResult result = new BigQueryUnitResult();
+        result.jobId = jobId;
+        result.status = Status.SUCCESS;
+        result.queryUnit = queryUnit;
+        result.duration = duration;
+        return result;
+    }
+
+    public static BigQueryUnitResult createFail(QueryUnit queryUnit, String jobId, String errorMessage) {
+        BigQueryUnitResult result = new BigQueryUnitResult();
+        result.queryUnit = queryUnit;
+        result.jobId = jobId;
+        result.status = Status.FAIL;
+        result.errorMessage = errorMessage;
+        return result;
     }
 
     public QueryUnit getQueryUnit() {
         return queryUnit;
     }
 
-    public double getDuration() {
+    public String getJobId() {
+        return jobId;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public String getDuration() {
         return duration;
     }
 
-    public boolean isHasError() {
-        return hasError;
-    }
-
-    public String getMessage() {
-        return message;
+    public String getErrorMessage() {
+        return errorMessage;
     }
 }

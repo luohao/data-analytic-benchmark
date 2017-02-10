@@ -18,7 +18,9 @@ package com.google.demo.analytics.executor;
 
 import com.google.demo.analytics.model.QueryUnit;
 
+import java.util.List;
+
 public interface Executor<T> {
 
-    T execute(QueryUnit queryUnit);
+    List<T> execute(QueryUnit queryUnit);
 }

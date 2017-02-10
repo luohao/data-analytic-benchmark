@@ -21,6 +21,8 @@ import com.google.demo.analytics.model.QueryPackage;
 import com.google.demo.analytics.model.QueryUnit;
 import com.google.demo.analytics.model.BigQueryUnitResult;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,20 +32,20 @@ public abstract class Benchmark<T> {
 
     protected abstract Executor<T> getExecutor();
 
-    protected abstract void processResults(List<T> results);
+    protected abstract void writeToOutput(List<T> results, Path output) throws IOException;
 
     public Benchmark(QueryPackage queryPackage) {
         this.queryPackage = queryPackage;
     }
 
-    public void runQueries() {
+    public void runQueries(Path output) throws IOException {
         List<T> results = new ArrayList<>();
 
         for(QueryUnit queryUnit : queryPackage.getQueryUnits()) {
-            T result = getExecutor().execute(queryUnit);
-            results.add(result);
+            List<T> result = getExecutor().execute(queryUnit);
+            results.addAll(result);
         }
 
-        processResults(results);
+        writeToOutput(results, output);
     }
 }

@@ -24,6 +24,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,32 +33,42 @@ public class BigQueryExecutor implements Executor<BigQueryUnitResult> {
 
     private Logger logger = LogManager.getLogger();
 
+    private BigQuery bigquery =
+            new BigQueryOptions.DefaultBigqueryFactory().create(BigQueryOptions.getDefaultInstance());
+
     @Override
-    public BigQueryUnitResult execute(QueryUnit queryUnit) {
-        BigQuery bigquery =
-                new BigQueryOptions.DefaultBigqueryFactory().create(BigQueryOptions.getDefaultInstance());
+    public List<BigQueryUnitResult> execute(QueryUnit queryUnit) {
+        List<BigQueryUnitResult> results = new ArrayList<>();
+        for(int i = 0; i < queryUnit.getCount(); i++) {
+            results.add(executeOnce(queryUnit));
+        }
+        return results;
+    }
 
-        QueryRequest queryRequest =
-                QueryRequest.newBuilder(queryUnit.getQuery())
-                        .setMaxWaitTime(500L)
-                        .setUseQueryCache(false)
-                        .build();
+    private BigQueryUnitResult executeOnce(QueryUnit queryUnit) {
+        QueryRequest request = QueryRequest.newBuilder(queryUnit.getQuery())
+                .setUseQueryCache(false)
+                .build();
 
-        logger.log(Level.INFO, String.format("Using query = %s", queryUnit.getQuery()));
-
-        StopWatch stopWatch = new StopWatch();
-        QueryResponse response = bigquery.query(queryRequest);
-        double duration = stopWatch.elapsedTime();
+//        StopWatch stopWatch = new StopWatch();
+        QueryResponse response = bigquery.query(request);
+        // Wait for things to finish
+        while (!response.jobCompleted()) {
+            try {
+                logger.log(Level.INFO, "NOT DONE");
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                logger.log(Level.ERROR, e);
+            }
+            response = bigquery.getQueryResults(response.getJobId());
+        }
+//        double duration = stopWatch.elapsedTime();
 
         if (response.hasErrors()) {
-            return new BigQueryUnitResult(
-                    queryUnit,
-                    true,
-                    response
-                            .getExecutionErrors()
-                            .stream()
-                            .<String>map(err -> err.getMessage())
-                            .collect(Collectors.joining("\n")));
+            String errors = response.getExecutionErrors()
+                    .stream()
+                    .map(i -> i.toString()).collect(Collectors.joining(","));
+            return BigQueryUnitResult.createFail(queryUnit, response.getJobId().toString(), errors);
         }
 
         JobStatistics statistics = bigquery.getJob(response.getJobId()).getStatistics();
@@ -65,17 +76,18 @@ public class BigQueryExecutor implements Executor<BigQueryUnitResult> {
         long startTime = statistics.getStartTime();
         long endTime = statistics.getEndTime();
 
-        QueryResult result = response.getResult();
-        logger.log(Level.INFO, response);
-        if(result != null) {
-            Iterator<List<FieldValue>> iter = result.iterateAll();
-            while (iter.hasNext()) {
-                List<FieldValue> row = iter.next();
-                logger.log(Level.INFO, row.stream().map(
-                        val -> val.toString()).collect(Collectors.joining(",")));
-            }
-        }
+        double duration = (endTime - startTime);
 
-        return new BigQueryUnitResult(queryUnit, duration);
+//        QueryResult result = response.getResult();
+//        if(result != null) {
+//            Iterator<List<FieldValue>> iter = result.iterateAll();
+//            while (iter.hasNext()) {
+//                List<FieldValue> row = iter.next();
+//                logger.log(Level.INFO, row.stream().map(
+//                        val -> val.toString()).collect(Collectors.joining(",")));
+//            }
+//        }
+
+        return BigQueryUnitResult.createSuccess(queryUnit, response.getJobId().toString(), String.valueOf(duration));
     }
 }

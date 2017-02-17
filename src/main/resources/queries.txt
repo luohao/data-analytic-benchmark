@@ -1,3 +1,5 @@
-#Engine [bq] | Label | Count | Query
+#Engine [bq,hive] | Label | Count | Query
 
-bq|small|5|select repo_name from [gcp-rocco:examples.licenses] where license = "apache-2.0" limit 10;
+#bq|small|5|select repo_name from [gcp-rocco:examples.licenses] where license = "apache-2.0" limit 10;
+
+hive|small|1|show tables

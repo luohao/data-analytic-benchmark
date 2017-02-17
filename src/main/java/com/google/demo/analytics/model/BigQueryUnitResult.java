@@ -16,54 +16,24 @@
 
 package com.google.demo.analytics.model;
 
-public class BigQueryUnitResult {
+public class BigQueryUnitResult extends QueryUnitResult {
 
-    public enum Status {
-        SUCCESS,
-        FAIL
+    private String jobId;
+
+    public BigQueryUnitResult(QueryUnit queryUnit, Status status, String duration, String errorMessage, String jobId) {
+        super(queryUnit, status, duration, errorMessage);
+        this.jobId = jobId;
     }
 
-    private QueryUnit queryUnit;
-    private String jobId;
-    private Status status;
-    private String duration;
-    private String errorMessage;
-
     public static BigQueryUnitResult createSuccess(QueryUnit queryUnit, String jobId, String duration) {
-        BigQueryUnitResult result = new BigQueryUnitResult();
-        result.jobId = jobId;
-        result.status = Status.SUCCESS;
-        result.queryUnit = queryUnit;
-        result.duration = duration;
-        return result;
+        return new BigQueryUnitResult(queryUnit, Status.SUCCESS, duration, null, jobId);
     }
 
     public static BigQueryUnitResult createFail(QueryUnit queryUnit, String jobId, String errorMessage) {
-        BigQueryUnitResult result = new BigQueryUnitResult();
-        result.queryUnit = queryUnit;
-        result.jobId = jobId;
-        result.status = Status.FAIL;
-        result.errorMessage = errorMessage;
-        return result;
-    }
-
-    public QueryUnit getQueryUnit() {
-        return queryUnit;
+        return new BigQueryUnitResult(queryUnit, Status.FAIL, null, errorMessage, jobId);
     }
 
     public String getJobId() {
         return jobId;
-    }
-
-    public Status getStatus() {
-        return status;
-    }
-
-    public String getDuration() {
-        return duration;
-    }
-
-    public String getErrorMessage() {
-        return errorMessage;
     }
 }

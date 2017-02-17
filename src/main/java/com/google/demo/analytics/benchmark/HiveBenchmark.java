@@ -5,7 +5,7 @@
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
 
-      http://www.apache.org/licenses/LICENSE-2.0
+        http://www.apache.org/licenses/LICENSE-2.0
 
     Unless required by applicable law or agreed to in writing, software
     distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,34 +16,36 @@
 
 package com.google.demo.analytics.benchmark;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.nio.file.StandardOpenOption.APPEND;
-import static java.nio.file.StandardOpenOption.CREATE;
-
-import com.google.demo.analytics.executor.BigQueryExecutor;
 import com.google.demo.analytics.executor.Executor;
-import com.google.demo.analytics.model.BigQueryUnitResult;
+import com.google.demo.analytics.executor.HiveExecutor;
 import com.google.demo.analytics.model.QueryPackage;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.google.demo.analytics.model.QueryUnitResult;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Properties;
 
-public class BigQueryBenchmark extends Benchmark<BigQueryUnitResult> {
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.nio.file.StandardOpenOption.APPEND;
+import static java.nio.file.StandardOpenOption.CREATE;
 
-    private Logger logger = LogManager.getLogger();
+public class HiveBenchmark extends Benchmark<QueryUnitResult> {
 
     private Executor executor;
 
-    public BigQueryBenchmark(QueryPackage queryPackage) {
+    private String host;
+    private String port;
+    private String database;
+    private String user;
+    private String password;
+
+    public HiveBenchmark(QueryPackage queryPackage) {
         super(queryPackage);
-        this.executor = new BigQueryExecutor();
+        parseHiveInput();
+        this.executor = new HiveExecutor(host, port, database, user, password);
     }
 
     @Override
@@ -52,10 +54,9 @@ public class BigQueryBenchmark extends Benchmark<BigQueryUnitResult> {
     }
 
     @Override
-    protected void writeToOutput(List<BigQueryUnitResult> results, Path output) throws IOException {
+    protected void writeToOutput(List<QueryUnitResult> results, Path output) throws IOException {
         String headers = String.join(
                 DELIMITER,
-                "job_id",
                 "status",
                 "label",
                 "duration (ms)",
@@ -64,13 +65,12 @@ public class BigQueryBenchmark extends Benchmark<BigQueryUnitResult> {
 
         Files.write(output, Arrays.asList(headers), UTF_8, APPEND, CREATE);
 
-        for(BigQueryUnitResult result : results) {
+        for(QueryUnitResult result : results) {
             Files.write(
                     output,
                     Arrays.asList(
                             String.join(
                                     DELIMITER,
-                                    result.getJobId(),
                                     result.getStatus().toString(),
                                     result.getQueryUnit().getLabel(),
                                     result.getDuration(),
@@ -79,6 +79,21 @@ public class BigQueryBenchmark extends Benchmark<BigQueryUnitResult> {
                     ),
                     UTF_8,
                     APPEND);
+        }
+    }
+
+    private void parseHiveInput() {
+        Properties prop = new Properties();
+        try {
+            prop.load(HiveBenchmark.class.getClassLoader().getResourceAsStream("env.properties"));
+
+            host = prop.getProperty("hive.host");
+            port = prop.getProperty("hive.port");
+            database = prop.getProperty("hive.database");
+            user = prop.getProperty("hive.user");
+            password = prop.getProperty("hive.password") == null ? "" : prop.getProperty("hive.password");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 }

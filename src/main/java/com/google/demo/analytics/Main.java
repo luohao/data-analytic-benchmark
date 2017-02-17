@@ -18,9 +18,9 @@ package com.google.demo.analytics;
 
 import com.google.demo.analytics.benchmark.Benchmark;
 import com.google.demo.analytics.benchmark.BigQueryBenchmark;
+import com.google.demo.analytics.benchmark.HiveBenchmark;
 import com.google.demo.analytics.model.QueryPackage;
 import com.google.demo.analytics.model.QueryUnit;
-import com.google.demo.analytics.model.BigQueryUnitResult;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.logging.log4j.Level;
@@ -32,7 +32,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class Main {
@@ -40,9 +39,11 @@ public class Main {
     private Logger logger = LogManager.getLogger();
 
     private List<QueryUnit> bigQueryUnits = new ArrayList<>();
+    private List<QueryUnit> hiveQueryUnits = new ArrayList<>();
 
     public static void main(String[] args) {
         Main main = new Main();
+
         main.start();
         main.cleanup();
     }
@@ -51,20 +52,35 @@ public class Main {
         try {
             logger.log(Level.INFO, "Starting analytics");
 
-            parseInput();
+            parseQueriesInput();
 
-            QueryPackage queryPackage = new QueryPackage(bigQueryUnits);
-
-            Benchmark benchmark = new BigQueryBenchmark(queryPackage);
-            String path = Main.class.getClassLoader().getResource("").getPath() + "bigquery-output.csv";
-            Path output = Paths.get(path);
-            benchmark.runQueries(output);
+            bigquery();
+            hive();
         } catch(Throwable throwable) {
             logger.log(Level.ERROR, throwable);
+            throwable.printStackTrace();
         }
     }
 
-    private void parseInput() throws IOException {
+    private void bigquery() throws IOException {
+        QueryPackage queryPackage = new QueryPackage(bigQueryUnits);
+
+        Benchmark benchmark = new BigQueryBenchmark(queryPackage);
+        String path = Main.class.getClassLoader().getResource("").getPath() + "bigquery-output.csv";
+        Path output = Paths.get(path);
+        benchmark.runQueries(output);
+    }
+
+    private void hive() throws IOException {
+        QueryPackage queryPackage = new QueryPackage(hiveQueryUnits);
+
+        Benchmark benchmark = new HiveBenchmark(queryPackage);
+        String path = Main.class.getClassLoader().getResource("").getPath() + "hive-output.csv";
+        Path output = Paths.get(path);
+        benchmark.runQueries(output);
+    }
+
+    private void parseQueriesInput() throws IOException {
         logger.log(Level.INFO, "Parsing input");
         LineIterator it = FileUtils.lineIterator(
                 new File(Main.class.getClassLoader().getResource("queries.txt").getPath()),
@@ -89,6 +105,9 @@ public class Main {
                 switch(keys[0]) {
                     case "bq":
                         bigQueryUnits.add(new QueryUnit(label, count, query));
+                        break;
+                    case "hive":
+                        hiveQueryUnits.add(new QueryUnit(label, count, query));
                         break;
                 }
             }

@@ -28,6 +28,8 @@ import java.util.List;
 
 public abstract class Benchmark<T> {
 
+    public static final String DELIMITER = "|";
+
     private QueryPackage queryPackage;
 
     protected abstract Executor<T> getExecutor();

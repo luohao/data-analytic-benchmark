@@ -29,6 +29,7 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven.compiler.source>1.8</maven.compiler.source>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <impala.jdbc.version>2.5.30</impala.jdbc.version>
     </properties>
 
     <dependencies>
@@ -98,7 +99,6 @@
             <version>21.0</version>
         </dependency>
 
-
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-nop</artifactId>
@@ -135,6 +135,70 @@
             </exclusions>
         </dependency>
 
+        <!-- These dependencies provided by your local repo -->
+
+<!--
+        <dependency>
+            <groupId>com.cloudera.impala.jdbc</groupId>
+            <artifactId>hive_metastore</artifactId>
+            <version>${impala.jdbc.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.cloudera.impala.jdbc</groupId>
+            <artifactId>hive_service</artifactId>
+            <version>${impala.jdbc.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.cloudera.impala.jdbc</groupId>
+            <artifactId>ImpalaJDBC41</artifactId>
+            <version>${impala.jdbc.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.cloudera.impala.jdbc</groupId>
+            <artifactId>ql</artifactId>
+            <version>${impala.jdbc.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.cloudera.impala.jdbc</groupId>
+            <artifactId>TCLIServiceClient</artifactId>
+            <version>${impala.jdbc.version}</version>
+        </dependency>
+-->
+        <!-- End of dependencies provided by your local repo -->
+<!--
+        <dependency>
+            <groupId>org.apache.thrift</groupId>
+            <artifactId>libfb303</artifactId>
+            <version>0.9.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.thrift</groupId>
+            <artifactId>libthrift</artifactId>
+            <version>0.9.0</version>
+        </dependency>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.14</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.5.11</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.5.11</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.zookeeper</groupId>
+            <artifactId>zookeeper</artifactId>
+            <version>3.4.6</version>
+        </dependency>
+-->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>

@@ -26,22 +26,20 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class HiveExecutor implements Executor<QueryUnitResult> {
+public class JDBCExecutor implements Executor<QueryUnitResult> {
 
     private Logger logger = LogManager.getLogger();
 
-    private String host;
-    private String port;
-    private String database;
     private String user;
     private String password;
+    private String connectionUrl;
+    private String driverName;
 
-    public HiveExecutor(String host, String port, String database, String user, String password) {
-        this.host = host;
-        this.port = port;
-        this.database = database;
+    public JDBCExecutor(String user, String password, String connectionUrl, String driverName) {
         this.user = user;
         this.password = password;
+        this.connectionUrl = connectionUrl;
+        this.driverName = driverName;
     }
 
     @Override
@@ -56,19 +54,16 @@ public class HiveExecutor implements Executor<QueryUnitResult> {
     private QueryUnitResult executeOnce(QueryUnit queryUnit) {
         Connection cnct = null;
         try {
-            String driverName = "org.apache.hive.jdbc.HiveDriver";
             Class.forName(driverName);
-
-            cnct = DriverManager.getConnection(
-                    String.format("jdbc:hive2://%s:%s/%s", host, port, database), user, password);
+            cnct = DriverManager.getConnection(connectionUrl, user, password);
             Statement stmt = cnct.createStatement();
 
             StopWatch stopWatch = new StopWatch();
             ResultSet res = stmt.executeQuery(queryUnit.getQuery());
             long duration = stopWatch.elapsedTime();
-            while (res.next()) {
-                logger.log(Level.INFO, res.getString(1));
-            }
+//            while (res.next()) {
+//                logger.log(Level.INFO, res.getString(1));
+//            }
 
             return QueryUnitResult.createSuccess(queryUnit, String.valueOf(duration));
         } catch (SQLException | ClassNotFoundException e) {
@@ -79,7 +74,7 @@ public class HiveExecutor implements Executor<QueryUnitResult> {
                     cnct.close();
                 }
             } catch (SQLException e) {
-                logger.log(Level.ERROR, "Error closing the Hive connection", e);
+                logger.log(Level.ERROR, "Error closing the JDBC connection", e);
             }
         }
     }

@@ -19,6 +19,7 @@ package com.google.demo.analytics;
 import com.google.demo.analytics.benchmark.Benchmark;
 import com.google.demo.analytics.benchmark.BigQueryBenchmark;
 import com.google.demo.analytics.benchmark.HiveBenchmark;
+import com.google.demo.analytics.benchmark.ImpalaBenchmark;
 import com.google.demo.analytics.model.QueryPackage;
 import com.google.demo.analytics.model.QueryUnit;
 import org.apache.commons.io.FileUtils;
@@ -40,6 +41,7 @@ public class Main {
 
     private List<QueryUnit> bigQueryUnits = new ArrayList<>();
     private List<QueryUnit> hiveQueryUnits = new ArrayList<>();
+    private List<QueryUnit> impalaQueryUnits = new ArrayList<>();
 
     public static void main(String[] args) {
         Main main = new Main();
@@ -56,6 +58,7 @@ public class Main {
 
             bigquery();
             hive();
+            impala();
         } catch(Throwable throwable) {
             logger.log(Level.ERROR, throwable);
             throwable.printStackTrace();
@@ -68,7 +71,10 @@ public class Main {
         Benchmark benchmark = new BigQueryBenchmark(queryPackage);
         String path = Main.class.getClassLoader().getResource("").getPath() + "bigquery-output.csv";
         Path output = Paths.get(path);
+
+        logger.log(Level.INFO, "Running BQ benchmark");
         benchmark.runQueries(output);
+        logger.log(Level.INFO, "Finished BQ benchmark");
     }
 
     private void hive() throws IOException {
@@ -77,7 +83,22 @@ public class Main {
         Benchmark benchmark = new HiveBenchmark(queryPackage);
         String path = Main.class.getClassLoader().getResource("").getPath() + "hive-output.csv";
         Path output = Paths.get(path);
+
+        logger.log(Level.INFO, "Running Hive benchmark");
         benchmark.runQueries(output);
+        logger.log(Level.INFO, "Finished Hive benchmark");
+    }
+
+    private void impala() throws IOException {
+        QueryPackage queryPackage = new QueryPackage(impalaQueryUnits);
+
+        Benchmark benchmark = new ImpalaBenchmark(queryPackage);
+        String path = Main.class.getClassLoader().getResource("").getPath() + "impala-output.csv";
+        Path output = Paths.get(path);
+
+        logger.log(Level.INFO, "Running Impala benchmark");
+        benchmark.runQueries(output);
+        logger.log(Level.INFO, "Finished Impala benchmark");
     }
 
     private void parseQueriesInput() throws IOException {
@@ -108,6 +129,9 @@ public class Main {
                         break;
                     case "hive":
                         hiveQueryUnits.add(new QueryUnit(label, count, query));
+                        break;
+                    case "impala":
+                        impalaQueryUnits.add(new QueryUnit(label,count, query));
                         break;
                 }
             }

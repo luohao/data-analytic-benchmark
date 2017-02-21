@@ -25,17 +25,21 @@ import org.apache.logging.log4j.Logger;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 
-public class JDBCExecutor implements Executor<QueryUnitResult> {
+public class JDBCExecutor implements Callable<List<QueryUnitResult>> {
 
     private Logger logger = LogManager.getLogger();
+
+    private QueryUnit queryUnit;
 
     private String user;
     private String password;
     private String connectionUrl;
     private String driverName;
 
-    public JDBCExecutor(String user, String password, String connectionUrl, String driverName) {
+    public JDBCExecutor(QueryUnit queryUnit, String user, String password, String connectionUrl, String driverName) {
+        this.queryUnit = queryUnit;
         this.user = user;
         this.password = password;
         this.connectionUrl = connectionUrl;
@@ -43,7 +47,9 @@ public class JDBCExecutor implements Executor<QueryUnitResult> {
     }
 
     @Override
-    public List<QueryUnitResult> execute(QueryUnit queryUnit) {
+    public List<QueryUnitResult> call() throws Exception {
+        logger.log(Level.INFO, Thread.currentThread().getName());
+
         List<QueryUnitResult> results = new ArrayList<>();
         for(int i = 0; i < queryUnit.getCount(); i++) {
             results.add(executeOnce(queryUnit));

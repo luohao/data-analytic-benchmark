@@ -20,7 +20,6 @@ import com.google.demo.analytics.benchmark.Benchmark;
 import com.google.demo.analytics.benchmark.BigQueryBenchmark;
 import com.google.demo.analytics.benchmark.HiveBenchmark;
 import com.google.demo.analytics.benchmark.ImpalaBenchmark;
-import com.google.demo.analytics.model.QueryPackage;
 import com.google.demo.analytics.model.QueryUnit;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
@@ -56,49 +55,36 @@ public class Main {
 
             parseQueriesInput();
 
-            bigquery();
-            hive();
-            impala();
+            List<Benchmark> benchmarks = new ArrayList<>();
+            benchmarks.add(new BigQueryBenchmark(bigQueryUnits));
+            benchmarks.add(new HiveBenchmark(hiveQueryUnits));
+            benchmarks.add(new ImpalaBenchmark(impalaQueryUnits));
+
+            checkConnections(benchmarks);
+
+            runBenchmarks(benchmarks);
         } catch(Throwable throwable) {
             logger.log(Level.ERROR, throwable);
             throwable.printStackTrace();
         }
     }
 
-    private void bigquery() throws IOException {
-        QueryPackage queryPackage = new QueryPackage(bigQueryUnits);
-
-        Benchmark benchmark = new BigQueryBenchmark(queryPackage);
-        String path = Main.class.getClassLoader().getResource("").getPath() + "bigquery-output.csv";
-        Path output = Paths.get(path);
-
-        logger.log(Level.INFO, "Running BQ benchmark");
-        benchmark.runQueries(output);
-        logger.log(Level.INFO, "Finished BQ benchmark");
+    private void checkConnections(List<Benchmark> benchmarks) throws Exception {
+        for(Benchmark benchmark : benchmarks) {
+            benchmark.checkConnection();
+            logger.log(Level.INFO, String.format("Checking connection for %s - OK", benchmark.getEngineName()));
+        }
     }
 
-    private void hive() throws IOException {
-        QueryPackage queryPackage = new QueryPackage(hiveQueryUnits);
+    private void runBenchmarks(List<Benchmark> benchmarks) throws IOException {
+        for(Benchmark benchmark : benchmarks) {
+            String path = Main.class.getClassLoader().getResource("").getPath() + benchmark.getFileOutputName();
+            Path output = Paths.get(path);
 
-        Benchmark benchmark = new HiveBenchmark(queryPackage);
-        String path = Main.class.getClassLoader().getResource("").getPath() + "hive-output.csv";
-        Path output = Paths.get(path);
-
-        logger.log(Level.INFO, "Running Hive benchmark");
-        benchmark.runQueries(output);
-        logger.log(Level.INFO, "Finished Hive benchmark");
-    }
-
-    private void impala() throws IOException {
-        QueryPackage queryPackage = new QueryPackage(impalaQueryUnits);
-
-        Benchmark benchmark = new ImpalaBenchmark(queryPackage);
-        String path = Main.class.getClassLoader().getResource("").getPath() + "impala-output.csv";
-        Path output = Paths.get(path);
-
-        logger.log(Level.INFO, "Running Impala benchmark");
-        benchmark.runQueries(output);
-        logger.log(Level.INFO, "Finished Impala benchmark");
+            logger.log(Level.INFO, String.format("Running %s benchmark", benchmark.getEngineName()));
+            benchmark.runQueries(output);
+            logger.log(Level.INFO, String.format("Finished %s benchmark", benchmark.getEngineName()));
+        }
     }
 
     private void parseQueriesInput() throws IOException {

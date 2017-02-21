@@ -1,6 +1,6 @@
 #Engine [bq,hive] | Label | Count | Query
 
-#bq|small|1|select repo_name from [gcp-rocco:examples.licenses] order by repo_name limit 10;
+bq|small|1|select repo_name from [gcp-rocco:examples.licenses] order by repo_name limit 10;
 
 hive|small|1|select repo_name from licenses order by repo_name limit 10
 

@@ -16,11 +16,9 @@
 
 package com.google.demo.analytics.benchmark;
 
-import com.google.demo.analytics.executor.BigQueryExecutor;
-import com.google.demo.analytics.model.BigQueryUnitResult;
+import com.google.demo.analytics.executor.JDBCExecutor;
 import com.google.demo.analytics.model.QueryUnit;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.google.demo.analytics.model.QueryUnitResult;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -33,61 +31,42 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.StandardOpenOption.APPEND;
 import static java.nio.file.StandardOpenOption.CREATE;
 
-public class BigQueryBenchmark extends Benchmark<BigQueryUnitResult> {
+public abstract class JDBCBenchmark extends Benchmark<QueryUnitResult> {
 
-    private Logger logger = LogManager.getLogger();
-
-    public BigQueryBenchmark(List<QueryUnit> queryUnits) {
+    public JDBCBenchmark(List<QueryUnit> queryUnits) {
         super(queryUnits);
     }
 
+    protected abstract String getUser();
+    protected abstract String getPassword();
+    protected abstract String getConnectionUrl();
+    protected abstract String getDriverName();
+
     @Override
-    protected Callable<List<BigQueryUnitResult>> getExecutor(QueryUnit queryUnit) {
-        return new BigQueryExecutor(queryUnit);
+    protected Callable<List<QueryUnitResult>> getExecutor(QueryUnit queryUnit) {
+        return new JDBCExecutor(queryUnit, getUser(), getPassword(), getConnectionUrl(), getDriverName());
     }
 
     @Override
-    public String getFileOutputName() {
-        return "bigquery-output.csv";
-    }
-
-    @Override
-    public String getEngineName() {
-        return "BQ";
-    }
-
-    @Override
-    protected QueryUnit getCheckConnectionQuery() {
-        return new QueryUnit(
-                "check",
-                1,
-                "select repo_name from [gcp-rocco:examples.licenses] limit 10");
-    }
-
-    @Override
-    protected void writeToOutput(List<BigQueryUnitResult> results, Path output) throws IOException {
+    protected void writeToOutput(List<QueryUnitResult> results, Path output) throws IOException {
         String headers = String.join(
                 DELIMITER,
-                "job_id",
                 "status",
                 "label",
-                "creation_time",
                 "duration_ms",
                 "query",
                 "error_messages");
 
         Files.write(output, Arrays.asList(headers), UTF_8, APPEND, CREATE);
 
-        for(BigQueryUnitResult result : results) {
+        for(QueryUnitResult result : results) {
             Files.write(
                     output,
                     Arrays.asList(
                             String.join(
                                     DELIMITER,
-                                    result.getJobId(),
                                     result.getStatus().toString(),
                                     result.getQueryUnit().getLabel(),
-                                    result.getCreationTime(),
                                     result.getDuration(),
                                     result.getQueryUnit().getQuery(),
                                     result.getErrorMessage() == null ? "" : result.getErrorMessage())

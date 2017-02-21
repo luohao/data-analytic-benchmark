@@ -19,21 +19,41 @@ package com.google.demo.analytics.model;
 public class BigQueryUnitResult extends QueryUnitResult {
 
     private String jobId;
+    private String creationTime;
 
-    public BigQueryUnitResult(QueryUnit queryUnit, Status status, String duration, String errorMessage, String jobId) {
+    public BigQueryUnitResult(
+            QueryUnit queryUnit,
+            Status status,
+            String duration,
+            String errorMessage,
+            String jobId,
+            String creationTime) {
         super(queryUnit, status, duration, errorMessage);
         this.jobId = jobId;
+        this.creationTime = creationTime;
     }
 
-    public static BigQueryUnitResult createSuccess(QueryUnit queryUnit, String jobId, String duration) {
-        return new BigQueryUnitResult(queryUnit, Status.SUCCESS, duration, null, jobId);
+    public static BigQueryUnitResult createSuccess(
+            QueryUnit queryUnit,
+            String jobId,
+            String duration,
+            String creationTime) {
+        return new BigQueryUnitResult(queryUnit, Status.SUCCESS, duration, null, jobId, creationTime);
     }
 
-    public static BigQueryUnitResult createFail(QueryUnit queryUnit, String jobId, String errorMessage) {
-        return new BigQueryUnitResult(queryUnit, Status.FAIL, null, errorMessage, jobId);
+    public static BigQueryUnitResult createFail(
+            QueryUnit queryUnit,
+            String jobId,
+            String errorMessage,
+            String creationTime) {
+        return new BigQueryUnitResult(queryUnit, Status.FAIL, null, errorMessage, jobId, creationTime);
     }
 
     public String getJobId() {
         return jobId;
+    }
+
+    public String getCreationTime() {
+        return creationTime;
     }
 }

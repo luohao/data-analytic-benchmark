@@ -19,8 +19,9 @@ package com.google.demo.analytics.executor;
 import com.google.demo.analytics.model.QueryUnit;
 
 import java.util.List;
+import java.util.concurrent.Callable;
 
-public interface Executor<T> {
+public interface Executor<T> extends Callable<List<T>> {
 
     List<T> execute(QueryUnit queryUnit);
 }

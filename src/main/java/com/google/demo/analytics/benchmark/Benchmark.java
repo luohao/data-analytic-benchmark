@@ -16,38 +16,89 @@
 
 package com.google.demo.analytics.benchmark;
 
-import com.google.demo.analytics.executor.Executor;
-import com.google.demo.analytics.model.QueryPackage;
 import com.google.demo.analytics.model.QueryUnit;
-import com.google.demo.analytics.model.BigQueryUnitResult;
+import com.google.demo.analytics.model.QueryUnitResult;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-public abstract class Benchmark<T> {
+public abstract class Benchmark<T extends QueryUnitResult> {
 
     public static final String DELIMITER = "|";
 
-    private QueryPackage queryPackage;
+    private int threads = 1;
 
-    protected abstract Executor<T> getExecutor();
+    private List<QueryUnit> queryUnits;
 
-    protected abstract void writeToOutput(List<T> results, Path output) throws IOException;
-
-    public Benchmark(QueryPackage queryPackage) {
-        this.queryPackage = queryPackage;
+    public Benchmark(List<QueryUnit> queryUnits) {
+        this.queryUnits = queryUnits;
+        parseInput();
     }
 
-    public void runQueries(Path output) throws IOException {
-        List<T> results = new ArrayList<>();
+    protected abstract Callable<List<T>> getExecutor(QueryUnit queryUnit);
+    protected abstract void writeToOutput(List<T> results, Path output) throws IOException;
+    public abstract String getFileOutputName();
+    public abstract String getEngineName();
+    protected abstract QueryUnit getCheckConnectionQuery();
 
-        for(QueryUnit queryUnit : queryPackage.getQueryUnits()) {
-            List<T> result = getExecutor().execute(queryUnit);
-            results.addAll(result);
+    public void runQueries(Path output) throws IOException {
+        ExecutorService executorService = Executors.newFixedThreadPool(threads);
+
+        List<Callable<List<T>>> callables = new ArrayList<>();
+        for(QueryUnit queryUnit : queryUnits) {
+            callables.add(getExecutor(queryUnit));
+        }
+
+        List<T> results = new ArrayList<>();
+        try {
+            executorService.invokeAll(callables)
+                .stream()
+                .map(future -> {
+                    try {
+                        return future.get();
+                    }
+                    catch (Exception e) {
+                        throw new IllegalStateException(e);
+                    }
+                })
+                .forEach(i -> results.addAll(i));
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
 
         writeToOutput(results, output);
+        executorService.shutdown();
+    }
+
+    public void checkConnection() throws Exception {
+        for(T result : getExecutor(getCheckConnectionQuery()).call()) {
+            if(QueryUnitResult.Status.FAIL.equals(result.getStatus())) {
+                throw new RuntimeException(
+                        String.format(
+                                "Error checking the connection for %s. Error: %s",
+                                getEngineName(),
+                                result.getErrorMessage()));
+            }
+        }
+    }
+
+    private void parseInput() {
+        Properties prop = new Properties();
+        try {
+            prop.load(Benchmark.class.getClassLoader().getResourceAsStream("env.properties"));
+
+            String threads = prop.getProperty("concurrent.threads");
+            if(threads != null) {
+                this.threads = Integer.parseInt(threads);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

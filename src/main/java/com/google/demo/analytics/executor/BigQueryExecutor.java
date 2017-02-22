@@ -19,6 +19,7 @@ package com.google.demo.analytics.executor;
 import com.google.cloud.bigquery.*;
 import com.google.demo.analytics.model.BigQueryUnitResult;
 import com.google.demo.analytics.model.QueryUnit;
+import com.google.demo.analytics.util.StopWatch;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -37,9 +38,11 @@ public class BigQueryExecutor implements Callable<List<BigQueryUnitResult>> {
             new BigQueryOptions.DefaultBigqueryFactory().create(BigQueryOptions.getDefaultInstance());
 
     private QueryUnit queryUnit;
+    private boolean useStopWatch;
 
-    public BigQueryExecutor(QueryUnit queryUnit) {
+    public BigQueryExecutor(QueryUnit queryUnit, boolean useStopWatch) {
         this.queryUnit = queryUnit;
+        this.useStopWatch = useStopWatch;
     }
 
     @Override
@@ -58,18 +61,18 @@ public class BigQueryExecutor implements Callable<List<BigQueryUnitResult>> {
                 .setUseQueryCache(true)
                 .build();
 
-//        StopWatch stopWatch = new StopWatch();
+        StopWatch stopWatch = new StopWatch();
         QueryResponse response = bigquery.query(request);
         // Wait for things to finish
         while (!response.jobCompleted()) {
             try {
-                Thread.sleep(2000);
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
                 logger.log(Level.ERROR, e);
             }
             response = bigquery.getQueryResults(response.getJobId());
         }
-//        double duration = stopWatch.elapsedTime();
+        long duration = stopWatch.elapsedTime();
 
         JobStatistics statistics = bigquery.getJob(response.getJobId()).getStatistics();
         long creationTime = statistics.getCreationTime();
@@ -87,7 +90,10 @@ public class BigQueryExecutor implements Callable<List<BigQueryUnitResult>> {
                     new Date(creationTime).toString());
         }
 
-        long duration = (endTime - startTime);
+        if(!useStopWatch) {
+            logger.log(Level.INFO, "Not using StopWatch");
+            duration = (endTime - startTime);
+        }
 
 //        QueryResult result = response.getResult();
 //        if(result != null) {

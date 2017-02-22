@@ -19,14 +19,13 @@ package com.google.demo.analytics.benchmark;
 import com.google.demo.analytics.executor.BigQueryExecutor;
 import com.google.demo.analytics.model.BigQueryUnitResult;
 import com.google.demo.analytics.model.QueryUnit;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.Callable;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -35,15 +34,16 @@ import static java.nio.file.StandardOpenOption.CREATE;
 
 public class BigQueryBenchmark extends Benchmark<BigQueryUnitResult> {
 
-    private Logger logger = LogManager.getLogger();
+    private boolean useStopwatch;
 
     public BigQueryBenchmark(List<QueryUnit> queryUnits) {
         super(queryUnits);
+        parseInput();
     }
 
     @Override
     protected Callable<List<BigQueryUnitResult>> getExecutor(QueryUnit queryUnit) {
-        return new BigQueryExecutor(queryUnit);
+        return new BigQueryExecutor(queryUnit, useStopwatch);
     }
 
     @Override
@@ -94,6 +94,18 @@ public class BigQueryBenchmark extends Benchmark<BigQueryUnitResult> {
                     ),
                     UTF_8,
                     APPEND);
+        }
+    }
+
+    private void parseInput() {
+        Properties prop = new Properties();
+        try {
+            prop.load(BigQueryBenchmark.class.getClassLoader().getResourceAsStream("env.properties"));
+
+            String useStopwatch = prop.getProperty("bq.stopwatch");
+            this.useStopwatch = Boolean.parseBoolean(useStopwatch);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 }

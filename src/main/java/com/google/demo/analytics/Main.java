@@ -16,10 +16,7 @@
 
 package com.google.demo.analytics;
 
-import com.google.demo.analytics.benchmark.Benchmark;
-import com.google.demo.analytics.benchmark.BigQueryBenchmark;
-import com.google.demo.analytics.benchmark.HiveBenchmark;
-import com.google.demo.analytics.benchmark.ImpalaBenchmark;
+import com.google.demo.analytics.benchmark.*;
 import com.google.demo.analytics.model.QueryUnit;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
@@ -41,6 +38,7 @@ public class Main {
     private List<QueryUnit> bigQueryUnits = new ArrayList<>();
     private List<QueryUnit> hiveQueryUnits = new ArrayList<>();
     private List<QueryUnit> impalaQueryUnits = new ArrayList<>();
+    private List<QueryUnit> exasolQueryUnits = new ArrayList<>();
 
     public static void main(String[] args) {
         Main main = new Main();
@@ -59,6 +57,7 @@ public class Main {
             benchmarks.add(new BigQueryBenchmark(bigQueryUnits));
             benchmarks.add(new HiveBenchmark(hiveQueryUnits));
             benchmarks.add(new ImpalaBenchmark(impalaQueryUnits));
+            benchmarks.add(new ExasolBenchmark(exasolQueryUnits));
 
             checkConnections(benchmarks);
 
@@ -117,7 +116,10 @@ public class Main {
                         hiveQueryUnits.add(new QueryUnit(label, count, query));
                         break;
                     case "impala":
-                        impalaQueryUnits.add(new QueryUnit(label,count, query));
+                        impalaQueryUnits.add(new QueryUnit(label, count, query));
+                        break;
+                    case "exasol":
+                        exasolQueryUnits.add(new QueryUnit(label, count, query));
                         break;
                 }
             }

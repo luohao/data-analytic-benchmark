@@ -33,6 +33,7 @@ public abstract class Benchmark<T extends QueryUnitResult> {
     public static final String DELIMITER = "|";
 
     private int threads = 1;
+    private Properties props;
 
     private List<QueryUnit> queryUnits;
 
@@ -41,18 +42,18 @@ public abstract class Benchmark<T extends QueryUnitResult> {
         parseInput();
     }
 
-    protected abstract Callable<List<T>> getExecutor(QueryUnit queryUnit);
+    protected abstract Callable<List<T>> getExecutor(QueryUnit queryUnit, Properties props);
     protected abstract void writeToOutput(List<T> results, Path output) throws IOException;
     public abstract String getFileOutputName();
     public abstract String getEngineName();
-    protected abstract QueryUnit getCheckConnectionQuery();
+    protected abstract QueryUnit getCheckConnectionQuery(Properties props);
 
     public void runQueries(Path output) throws IOException {
         ExecutorService executorService = Executors.newFixedThreadPool(threads);
 
         List<Callable<List<T>>> callables = new ArrayList<>();
         for(QueryUnit queryUnit : queryUnits) {
-            callables.add(getExecutor(queryUnit));
+            callables.add(getExecutor(queryUnit, props));
         }
 
         List<T> results = new ArrayList<>();
@@ -77,7 +78,7 @@ public abstract class Benchmark<T extends QueryUnitResult> {
     }
 
     public void checkConnection() throws Exception {
-        for(T result : getExecutor(getCheckConnectionQuery()).call()) {
+        for(T result : getExecutor(getCheckConnectionQuery(props), props).call()) {
             if(QueryUnitResult.Status.FAIL.equals(result.getStatus())) {
                 throw new RuntimeException(
                         String.format(
@@ -89,11 +90,11 @@ public abstract class Benchmark<T extends QueryUnitResult> {
     }
 
     private void parseInput() {
-        Properties prop = new Properties();
+        props = new Properties();
         try {
-            prop.load(Benchmark.class.getClassLoader().getResourceAsStream("env.properties"));
+            props.load(Benchmark.class.getClassLoader().getResourceAsStream("env.properties"));
 
-            String threads = prop.getProperty("concurrent.threads");
+            String threads = props.getProperty("concurrent.threads");
             if(threads != null) {
                 this.threads = Integer.parseInt(threads);
             }

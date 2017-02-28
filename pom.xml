@@ -135,6 +135,12 @@
             </exclusions>
         </dependency>
 
+        <dependency>
+            <groupId>com.exasol.jdbc</groupId>
+            <artifactId>exasol-jdbc</artifactId>
+            <version>5.0.17</version>
+        </dependency>
+
         <!-- These dependencies provided by your local repo -->
 
 <!--

@@ -34,16 +34,14 @@ import static java.nio.file.StandardOpenOption.CREATE;
 
 public class BigQueryBenchmark extends Benchmark<BigQueryUnitResult> {
 
-    private boolean useStopwatch;
-
     public BigQueryBenchmark(List<QueryUnit> queryUnits) {
         super(queryUnits);
-        parseInput();
     }
 
     @Override
-    protected Callable<List<BigQueryUnitResult>> getExecutor(QueryUnit queryUnit) {
-        return new BigQueryExecutor(queryUnit, useStopwatch);
+    protected Callable<List<BigQueryUnitResult>> getExecutor(QueryUnit queryUnit, Properties props) {
+        String useStopwatch = props.getProperty("bq.stopwatch");
+        return new BigQueryExecutor(queryUnit, Boolean.parseBoolean(useStopwatch));
     }
 
     @Override
@@ -57,11 +55,11 @@ public class BigQueryBenchmark extends Benchmark<BigQueryUnitResult> {
     }
 
     @Override
-    protected QueryUnit getCheckConnectionQuery() {
+    protected QueryUnit getCheckConnectionQuery(Properties props) {
         return new QueryUnit(
                 "check",
                 1,
-                "select repo_name from [gcp-rocco:examples.licenses] limit 10");
+                props.getProperty("bq.connection.check"));
     }
 
     @Override
@@ -94,18 +92,6 @@ public class BigQueryBenchmark extends Benchmark<BigQueryUnitResult> {
                     ),
                     UTF_8,
                     APPEND);
-        }
-    }
-
-    private void parseInput() {
-        Properties prop = new Properties();
-        try {
-            prop.load(BigQueryBenchmark.class.getClassLoader().getResourceAsStream("env.properties"));
-
-            String useStopwatch = prop.getProperty("bq.stopwatch");
-            this.useStopwatch = Boolean.parseBoolean(useStopwatch);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
     }
 }

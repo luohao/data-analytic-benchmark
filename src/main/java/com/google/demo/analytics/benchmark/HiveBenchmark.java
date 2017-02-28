@@ -20,7 +20,6 @@ import com.google.demo.analytics.executor.JDBCExecutor;
 import com.google.demo.analytics.model.QueryUnit;
 import com.google.demo.analytics.model.QueryUnitResult;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Callable;
@@ -29,17 +28,15 @@ public class HiveBenchmark extends JDBCBenchmark {
 
     private static final String driverName = "org.apache.hive.jdbc.HiveDriver";
 
-    private String user;
-    private String password;
-    private String connectionUrl;
-
     public HiveBenchmark(List<QueryUnit> queryUnits) {
         super(queryUnits);
-        parseInput();
     }
 
     @Override
-    protected Callable<List<QueryUnitResult>> getExecutor(QueryUnit queryUnit) {
+    protected Callable<List<QueryUnitResult>> getExecutor(QueryUnit queryUnit, Properties props) {
+        String user = props.getProperty("hive.user");
+        String password = props.getProperty("hive.password") == null ? "" : props.getProperty("hive.password");
+        String connectionUrl = props.getProperty("hive.connection.url");
         return new JDBCExecutor(queryUnit, user, password, connectionUrl, driverName);
     }
 
@@ -54,43 +51,10 @@ public class HiveBenchmark extends JDBCBenchmark {
     }
 
     @Override
-    protected String getUser() {
-        return user;
-    }
-
-    @Override
-    protected String getPassword() {
-        return password;
-    }
-
-    @Override
-    protected String getConnectionUrl() {
-        return connectionUrl;
-    }
-
-    @Override
-    protected String getDriverName() {
-        return driverName;
-    }
-
-    @Override
-    protected QueryUnit getCheckConnectionQuery() {
+    protected QueryUnit getCheckConnectionQuery(Properties props) {
         return new QueryUnit(
                 "check",
                 1,
-                "show tables");
-    }
-
-    private void parseInput() {
-        Properties prop = new Properties();
-        try {
-            prop.load(HiveBenchmark.class.getClassLoader().getResourceAsStream("env.properties"));
-
-            user = prop.getProperty("hive.user");
-            password = prop.getProperty("hive.password") == null ? "" : prop.getProperty("hive.password");
-            connectionUrl = prop.getProperty("hive.connection.url");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+                props.getProperty("hive.connection.check"));
     }
 }

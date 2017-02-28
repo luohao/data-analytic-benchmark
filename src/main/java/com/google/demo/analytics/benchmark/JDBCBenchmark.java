@@ -16,7 +16,6 @@
 
 package com.google.demo.analytics.benchmark;
 
-import com.google.demo.analytics.executor.JDBCExecutor;
 import com.google.demo.analytics.model.QueryUnit;
 import com.google.demo.analytics.model.QueryUnitResult;
 
@@ -25,7 +24,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Callable;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.StandardOpenOption.APPEND;
@@ -35,16 +33,6 @@ public abstract class JDBCBenchmark extends Benchmark<QueryUnitResult> {
 
     public JDBCBenchmark(List<QueryUnit> queryUnits) {
         super(queryUnits);
-    }
-
-    protected abstract String getUser();
-    protected abstract String getPassword();
-    protected abstract String getConnectionUrl();
-    protected abstract String getDriverName();
-
-    @Override
-    protected Callable<List<QueryUnitResult>> getExecutor(QueryUnit queryUnit) {
-        return new JDBCExecutor(queryUnit, getUser(), getPassword(), getConnectionUrl(), getDriverName());
     }
 
     @Override

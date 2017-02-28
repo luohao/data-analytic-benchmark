@@ -73,6 +73,7 @@ public class JDBCExecutor implements Callable<List<QueryUnitResult>> {
 
             return QueryUnitResult.createSuccess(queryUnit, String.valueOf(duration));
         } catch (SQLException | ClassNotFoundException e) {
+            e.printStackTrace();
             return QueryUnitResult.createFail(queryUnit, e.getMessage());
         } finally {
             try {

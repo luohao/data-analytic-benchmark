@@ -25,6 +25,7 @@ import com.google.demo.analytics.write.Writer;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -39,26 +40,34 @@ public abstract class JDBCBenchmark extends Benchmark<QueryUnitResult> {
     }
 
     @Override
-    protected void writeToOutput(List<QueryUnitResult> results, Writer writer) throws IOException {
-        String headers = String.join(
-                DELIMITER,
+    protected void writeToOutput(QueryPackage queryPackage, List<QueryUnitResult> results, Writer writer)
+            throws IOException {
+        List<String> baseHeaders = new ArrayList<>(Arrays.asList(
                 "id",
                 "query",
                 "status",
                 "duration_ms",
-                "error_messages");
+                "error_messages"
+        ));
+
+        baseHeaders.addAll(queryPackage.getKeys());
+        String headers = String.join(DELIMITER, baseHeaders);
 
         writer.write(Arrays.asList(headers));
 
         for(QueryUnitResult result : results) {
-            writer.write(Arrays.asList(
-                    String.join(
-                            DELIMITER,
-                            result.getQueryUnit().getId(),
-                            result.getQueryUnit().getQuery(),
-                            result.getStatus().toString(),
-                            result.getDuration(),
-                            result.getErrorMessage() == null ? "" : result.getErrorMessage())));
+            List<String> baseValues = new ArrayList<>(Arrays.asList(
+                    result.getQueryUnit().getId(),
+                    result.getQueryUnit().getQuery(),
+                    result.getStatus().toString(),
+                    result.getDuration(),
+                    result.getErrorMessage() == null ? "" : result.getErrorMessage()
+            ));
+
+            baseValues.addAll(result.getQueryUnit().getValues());
+            String values = String.join(DELIMITER, baseValues);
+
+            writer.write(Arrays.asList(values));
         }
     }
 }

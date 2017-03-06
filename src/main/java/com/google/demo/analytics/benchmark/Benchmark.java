@@ -50,7 +50,7 @@ public abstract class Benchmark<T extends QueryUnitResult> {
     }
 
     protected abstract Callable<List<T>> getExecutor(QueryUnit queryUnit, Properties props);
-    protected abstract void writeToOutput(List<T> results, Writer writer) throws IOException;
+    protected abstract void writeToOutput(QueryPackage queryPackage, List<T> results, Writer writer) throws IOException;
     public abstract String getFileOutputName();
     public abstract String getEngineName();
     protected abstract QueryUnit getCheckConnectionQuery(Properties props);
@@ -88,7 +88,7 @@ public abstract class Benchmark<T extends QueryUnitResult> {
                 throw new RuntimeException(e);
             }
 
-            writeToOutput(results, new DefaultWriter(queryPackage.getQueryFile()));
+            writeToOutput(queryPackage, results, new DefaultWriter(queryPackage.getQueryFile()));
         }
 
         executorService.shutdown();

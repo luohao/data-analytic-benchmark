@@ -16,8 +16,7 @@
 
 package com.google.demo.analytics;
 
-import com.google.demo.analytics.benchmark.Benchmark;
-import com.google.demo.analytics.benchmark.BigQueryBenchmark;
+import com.google.demo.analytics.benchmark.*;
 import com.google.demo.analytics.model.QueryPackage;
 import com.google.demo.analytics.model.QueryUnit;
 import org.apache.commons.io.FileUtils;
@@ -39,6 +38,9 @@ public class Main {
     private Logger logger = LogManager.getLogger();
 
     private List<QueryPackage> bigQueryPackages = new ArrayList<>();
+    private List<QueryPackage> hiveQueryPackages = new ArrayList<>();
+    private List<QueryPackage> impalaQueryPackages = new ArrayList<>();
+    private List<QueryPackage> exasolQueryPackages = new ArrayList<>();
 
     public static void main(String[] args) {
         Main main = new Main();
@@ -55,9 +57,9 @@ public class Main {
 
             List<Benchmark> benchmarks = new ArrayList<>();
             benchmarks.add(new BigQueryBenchmark(bigQueryPackages));
-//            benchmarks.add(new HiveBenchmark(hiveQueryUnits));
-//            benchmarks.add(new ImpalaBenchmark(impalaQueryUnits));
-//            benchmarks.add(new ExasolBenchmark(exasolQueryUnits));
+            benchmarks.add(new HiveBenchmark(hiveQueryPackages));
+            benchmarks.add(new ImpalaBenchmark(impalaQueryPackages));
+            benchmarks.add(new ExasolBenchmark(exasolQueryPackages));
 
             runBenchmarks(checkConnections(benchmarks));
         } catch(Throwable throwable) {
@@ -105,6 +107,18 @@ public class Main {
                             && file.getFileName().toString().endsWith(".txt")) {
                         logger.log(Level.INFO, String.format("Parsing file %s", file.getFileName()));
                         bigQueryPackages.add(getQueryPackage(file));
+                    } else if(file.getFileName().toString().startsWith("hive")
+                            && file.getFileName().toString().endsWith(".txt")) {
+                        logger.log(Level.INFO, String.format("Parsing file %s", file.getFileName()));
+                        hiveQueryPackages.add(getQueryPackage(file));
+                    } else if(file.getFileName().toString().startsWith("impala")
+                            && file.getFileName().toString().endsWith(".txt")) {
+                        logger.log(Level.INFO, String.format("Parsing file %s", file.getFileName()));
+                        impalaQueryPackages.add(getQueryPackage(file));
+                    } else if(file.getFileName().toString().startsWith("exasol")
+                            && file.getFileName().toString().endsWith(".txt")) {
+                        logger.log(Level.INFO, String.format("Parsing file %s", file.getFileName()));
+                        exasolQueryPackages.add(getQueryPackage(file));
                     }
                 });
     }
@@ -144,7 +158,12 @@ public class Main {
                     String query = columns[1];
                     int count = isNumeric(columns[2]) ? Integer.valueOf(columns[2]) : 1;
 
-                    queryUnits.add(new QueryUnit(id, query, count));
+                    List<String> values = new ArrayList<>();
+                    for(int i = 3; i < columns.length; i++) {
+                        values.add(columns[i]);
+                    }
+
+                    queryUnits.add(new QueryUnit(id, query, count, values));
                 }
             }
 

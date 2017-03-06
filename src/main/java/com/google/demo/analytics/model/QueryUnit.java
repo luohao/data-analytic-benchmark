@@ -16,16 +16,25 @@
 
 package com.google.demo.analytics.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class QueryUnit {
 
     private String id;
     private String query;
     private int count;
+    private List<String> values;
 
     public QueryUnit(String id, String query, int count) {
+        this(id, query, count, new ArrayList<>());
+    }
+
+    public QueryUnit(String id, String query, int count, List<String> values) {
         this.id = id;
         this.query = query;
         this.count = count;
+        this.values = values;
     }
 
     public String getId() {
@@ -38,5 +47,9 @@ public class QueryUnit {
 
     public int getCount() {
         return count;
+    }
+
+    public List<String> getValues() {
+        return values;
     }
 }

@@ -16,8 +16,11 @@
 
 package com.google.demo.analytics.benchmark;
 
+import com.google.demo.analytics.model.BigQueryUnitResult;
+import com.google.demo.analytics.model.QueryPackage;
 import com.google.demo.analytics.model.QueryUnit;
 import com.google.demo.analytics.model.QueryUnitResult;
+import com.google.demo.analytics.write.Writer;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -31,36 +34,31 @@ import static java.nio.file.StandardOpenOption.CREATE;
 
 public abstract class JDBCBenchmark extends Benchmark<QueryUnitResult> {
 
-    public JDBCBenchmark(List<QueryUnit> queryUnits) {
-        super(queryUnits);
+    public JDBCBenchmark(List<QueryPackage> queryPackages) {
+        super(queryPackages);
     }
 
     @Override
-    protected void writeToOutput(List<QueryUnitResult> results, Path output) throws IOException {
+    protected void writeToOutput(List<QueryUnitResult> results, Writer writer) throws IOException {
         String headers = String.join(
                 DELIMITER,
-                "status",
-                "label",
-                "duration_ms",
+                "id",
                 "query",
+                "status",
+                "duration_ms",
                 "error_messages");
 
-        Files.write(output, Arrays.asList(headers), UTF_8, APPEND, CREATE);
+        writer.write(Arrays.asList(headers));
 
         for(QueryUnitResult result : results) {
-            Files.write(
-                    output,
-                    Arrays.asList(
-                            String.join(
-                                    DELIMITER,
-                                    result.getStatus().toString(),
-                                    result.getQueryUnit().getLabel(),
-                                    result.getDuration(),
-                                    result.getQueryUnit().getQuery(),
-                                    result.getErrorMessage() == null ? "" : result.getErrorMessage())
-                    ),
-                    UTF_8,
-                    APPEND);
+            writer.write(Arrays.asList(
+                    String.join(
+                            DELIMITER,
+                            result.getQueryUnit().getId(),
+                            result.getQueryUnit().getQuery(),
+                            result.getStatus().toString(),
+                            result.getDuration(),
+                            result.getErrorMessage() == null ? "" : result.getErrorMessage())));
         }
     }
 }

@@ -16,11 +16,16 @@
 
 package com.google.demo.analytics.benchmark;
 
+import com.google.demo.analytics.model.QueryPackage;
 import com.google.demo.analytics.model.QueryUnit;
 import com.google.demo.analytics.model.QueryUnitResult;
+import com.google.demo.analytics.write.DefaultWriter;
+import com.google.demo.analytics.write.Writer;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -30,51 +35,65 @@ import java.util.concurrent.Executors;
 
 public abstract class Benchmark<T extends QueryUnitResult> {
 
+    private Logger logger = LogManager.getLogger();
+
     public static final String DELIMITER = "|";
 
     private int threads = 1;
     private Properties props;
 
-    private List<QueryUnit> queryUnits;
+    private List<QueryPackage> queryPackages;
 
-    public Benchmark(List<QueryUnit> queryUnits) {
-        this.queryUnits = queryUnits;
+    public Benchmark(List<QueryPackage> queryPackages) {
+        this.queryPackages = queryPackages;
         parseInput();
     }
 
     protected abstract Callable<List<T>> getExecutor(QueryUnit queryUnit, Properties props);
-    protected abstract void writeToOutput(List<T> results, Path output) throws IOException;
+    protected abstract void writeToOutput(List<T> results, Writer writer) throws IOException;
     public abstract String getFileOutputName();
     public abstract String getEngineName();
     protected abstract QueryUnit getCheckConnectionQuery(Properties props);
 
-    public void runQueries(Path output) throws IOException {
+    public void runQueries() throws IOException {
+        if(queryPackages.isEmpty()) {
+            logger.log(Level.INFO, String.format("Not queries to run for %s", getEngineName()));
+            return;
+        }
+
+        logger.log(Level.INFO, String.format("Running %s benchmark", getEngineName()));
         ExecutorService executorService = Executors.newFixedThreadPool(threads);
 
-        List<Callable<List<T>>> callables = new ArrayList<>();
-        for(QueryUnit queryUnit : queryUnits) {
-            callables.add(getExecutor(queryUnit, props));
+        for(QueryPackage queryPackage : queryPackages) {
+            List<Callable<List<T>>> callables = new ArrayList<>();
+
+            for(QueryUnit queryUnit : queryPackage.getQueryUnits()) {
+                callables.add(getExecutor(queryUnit, props));
+            }
+
+            List<T> results = new ArrayList<>();
+            try {
+                executorService.invokeAll(callables)
+                        .stream()
+                        .map(future -> {
+                            try {
+                                return future.get();
+                            }
+                            catch (Exception e) {
+                                throw new IllegalStateException(e);
+                            }
+                        })
+                        .forEach(i -> results.addAll(i));
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+
+            writeToOutput(results, new DefaultWriter(queryPackage.getQueryFile()));
         }
 
-        List<T> results = new ArrayList<>();
-        try {
-            executorService.invokeAll(callables)
-                .stream()
-                .map(future -> {
-                    try {
-                        return future.get();
-                    }
-                    catch (Exception e) {
-                        throw new IllegalStateException(e);
-                    }
-                })
-                .forEach(i -> results.addAll(i));
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-
-        writeToOutput(results, output);
         executorService.shutdown();
+
+        logger.log(Level.INFO, String.format("Finished %s benchmark", getEngineName()));
     }
 
     public void checkConnection() throws Exception {

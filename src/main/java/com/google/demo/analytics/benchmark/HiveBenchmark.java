@@ -17,9 +17,12 @@
 package com.google.demo.analytics.benchmark;
 
 import com.google.demo.analytics.executor.JDBCExecutor;
+import com.google.demo.analytics.model.QueryPackage;
 import com.google.demo.analytics.model.QueryUnit;
 import com.google.demo.analytics.model.QueryUnitResult;
+import com.google.demo.analytics.write.Writer;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Callable;
@@ -28,8 +31,8 @@ public class HiveBenchmark extends JDBCBenchmark {
 
     private static final String driverName = "org.apache.hive.jdbc.HiveDriver";
 
-    public HiveBenchmark(List<QueryUnit> queryUnits) {
-        super(queryUnits);
+    public HiveBenchmark(List<QueryPackage> queryPackages) {
+        super(queryPackages);
     }
 
     @Override
@@ -54,7 +57,7 @@ public class HiveBenchmark extends JDBCBenchmark {
     protected QueryUnit getCheckConnectionQuery(Properties props) {
         return new QueryUnit(
                 "check",
-                1,
-                props.getProperty("hive.connection.check"));
+                props.getProperty("hive.connection.check"),
+                1);
     }
 }

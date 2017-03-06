@@ -39,10 +39,15 @@ public class BigQueryExecutor implements Callable<List<BigQueryUnitResult>> {
 
     private QueryUnit queryUnit;
     private boolean useStopWatch;
+    private boolean useQueryCache;
 
-    public BigQueryExecutor(QueryUnit queryUnit, boolean useStopWatch) {
+    public BigQueryExecutor(QueryUnit queryUnit, boolean useStopWatch, boolean useQueryCache) {
         this.queryUnit = queryUnit;
         this.useStopWatch = useStopWatch;
+        this.useQueryCache = useQueryCache;
+
+        logger.log(Level.INFO, String.format("Using stopwatch = %s", useStopWatch));
+        logger.log(Level.INFO, String.format("Using cache = %s", useQueryCache));
     }
 
     @Override
@@ -58,7 +63,7 @@ public class BigQueryExecutor implements Callable<List<BigQueryUnitResult>> {
 
     private BigQueryUnitResult executeOnce(QueryUnit queryUnit) {
         QueryRequest request = QueryRequest.newBuilder(queryUnit.getQuery())
-                .setUseQueryCache(true)
+                .setUseQueryCache(useQueryCache)
                 .build();
 
         StopWatch stopWatch = new StopWatch();
@@ -91,7 +96,6 @@ public class BigQueryExecutor implements Callable<List<BigQueryUnitResult>> {
         }
 
         if(!useStopWatch) {
-            logger.log(Level.INFO, "Not using StopWatch");
             duration = (endTime - startTime);
         }
 

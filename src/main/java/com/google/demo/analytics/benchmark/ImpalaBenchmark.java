@@ -17,6 +17,7 @@
 package com.google.demo.analytics.benchmark;
 
 import com.google.demo.analytics.executor.JDBCExecutor;
+import com.google.demo.analytics.model.QueryPackage;
 import com.google.demo.analytics.model.QueryUnit;
 import com.google.demo.analytics.model.QueryUnitResult;
 
@@ -28,8 +29,8 @@ public class ImpalaBenchmark extends JDBCBenchmark {
 
     private static final String driverName = "org.apache.hive.jdbc.HiveDriver";
 
-    public ImpalaBenchmark(List<QueryUnit> queryUnits) {
-        super(queryUnits);
+    public ImpalaBenchmark(List<QueryPackage> queryPackages) {
+        super(queryPackages);
     }
 
     @Override
@@ -54,7 +55,7 @@ public class ImpalaBenchmark extends JDBCBenchmark {
     protected QueryUnit getCheckConnectionQuery(Properties props) {
         return new QueryUnit(
                 "check",
-                1,
-                props.getProperty("impala.connection.check"));
+                props.getProperty("impala.connection.check"),
+                1);
     }
 }

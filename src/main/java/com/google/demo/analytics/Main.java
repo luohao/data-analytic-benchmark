@@ -16,7 +16,9 @@
 
 package com.google.demo.analytics;
 
-import com.google.demo.analytics.benchmark.*;
+import com.google.demo.analytics.benchmark.Benchmark;
+import com.google.demo.analytics.benchmark.BigQueryBenchmark;
+import com.google.demo.analytics.model.QueryPackage;
 import com.google.demo.analytics.model.QueryUnit;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
@@ -26,6 +28,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -35,10 +38,7 @@ public class Main {
 
     private Logger logger = LogManager.getLogger();
 
-    private List<QueryUnit> bigQueryUnits = new ArrayList<>();
-    private List<QueryUnit> hiveQueryUnits = new ArrayList<>();
-    private List<QueryUnit> impalaQueryUnits = new ArrayList<>();
-    private List<QueryUnit> exasolQueryUnits = new ArrayList<>();
+    private List<QueryPackage> bigQueryPackages = new ArrayList<>();
 
     public static void main(String[] args) {
         Main main = new Main();
@@ -54,25 +54,33 @@ public class Main {
             parseQueriesInput();
 
             List<Benchmark> benchmarks = new ArrayList<>();
-            benchmarks.add(new BigQueryBenchmark(bigQueryUnits));
-            benchmarks.add(new HiveBenchmark(hiveQueryUnits));
-            benchmarks.add(new ImpalaBenchmark(impalaQueryUnits));
-            benchmarks.add(new ExasolBenchmark(exasolQueryUnits));
+            benchmarks.add(new BigQueryBenchmark(bigQueryPackages));
+//            benchmarks.add(new HiveBenchmark(hiveQueryUnits));
+//            benchmarks.add(new ImpalaBenchmark(impalaQueryUnits));
+//            benchmarks.add(new ExasolBenchmark(exasolQueryUnits));
 
-            checkConnections(benchmarks);
-
-            runBenchmarks(benchmarks);
+            runBenchmarks(checkConnections(benchmarks));
         } catch(Throwable throwable) {
             logger.log(Level.ERROR, throwable);
             throwable.printStackTrace();
         }
     }
 
-    private void checkConnections(List<Benchmark> benchmarks) throws Exception {
+    private List<Benchmark> checkConnections(List<Benchmark> benchmarks) throws Exception {
+        List<Benchmark> results = new ArrayList<>();
         for(Benchmark benchmark : benchmarks) {
-            benchmark.checkConnection();
-            logger.log(Level.INFO, String.format("Checking connection for %s - OK", benchmark.getEngineName()));
+            try {
+                benchmark.checkConnection();
+                results.add(benchmark);
+                logger.log(Level.INFO, String.format("Checking connection for %s - OK", benchmark.getEngineName()));
+            } catch(Throwable throwable) {
+                logger.log(Level.ERROR, String.format(
+                        "Checking connection for %s - ERROR - %s",
+                        benchmark.getEngineName(),
+                        throwable.getMessage()));
+            }
         }
+        return results;
     }
 
     private void runBenchmarks(List<Benchmark> benchmarks) throws IOException {
@@ -80,51 +88,73 @@ public class Main {
             String path = Main.class.getClassLoader().getResource("").getPath() + benchmark.getFileOutputName();
             Path output = Paths.get(path);
 
-            logger.log(Level.INFO, String.format("Running %s benchmark", benchmark.getEngineName()));
-            benchmark.runQueries(output);
-            logger.log(Level.INFO, String.format("Finished %s benchmark", benchmark.getEngineName()));
+            benchmark.runQueries();
         }
     }
 
     private void parseQueriesInput() throws IOException {
-        logger.log(Level.INFO, "Parsing input");
-        LineIterator it = FileUtils.lineIterator(
-                new File(Main.class.getClassLoader().getResource("queries.txt").getPath()),
-                "UTF-8"
-        );
+        logger.log(Level.INFO, "Parsing input queries");
+        String path = Main.class.getClassLoader().getResource("").getPath();
+        Path resources = Paths.get(path);
 
-        while(it.hasNext()) {
-            String line = it.next();
 
-            //Skip comments
-            if(!line.startsWith("#")) {
-                String[] keys = line.split("\\|");
+        Files.list(resources)
+                .filter(Files::isRegularFile)
+                .forEach(file -> {
+                    if(file.getFileName().toString().startsWith("bq")
+                            && file.getFileName().toString().endsWith(".txt")) {
+                        logger.log(Level.INFO, String.format("Parsing file %s", file.getFileName()));
+                        bigQueryPackages.add(getQueryPackage(file));
+                    }
+                });
+    }
 
-                if(keys.length < 4) {
-                    continue;
-                }
+    private QueryPackage getQueryPackage(Path file) {
+        logger.log(Level.INFO, String.format("Parsing file %s", file.getFileName()));
+        LineIterator it = null;
+        try {
+            it = FileUtils.lineIterator(
+                    new File(file.toUri()),
+                    "UTF-8"
+            );
 
-                String label = keys[1];
-                int count = isNumeric(keys[2]) ? Integer.valueOf(keys[2]) : 1;
-                String query = keys[3];
+            List<String> keys = new ArrayList<>();
+            List<QueryUnit> queryUnits = new ArrayList<>();
 
-                switch(keys[0]) {
-                    case "bq":
-                        bigQueryUnits.add(new QueryUnit(label, count, query));
-                        break;
-                    case "hive":
-                        hiveQueryUnits.add(new QueryUnit(label, count, query));
-                        break;
-                    case "impala":
-                        impalaQueryUnits.add(new QueryUnit(label, count, query));
-                        break;
-                    case "exasol":
-                        exasolQueryUnits.add(new QueryUnit(label, count, query));
-                        break;
+            while(it.hasNext()) {
+                String line = it.next();
+
+                //Skip comments
+                if(!line.startsWith("#")) {
+                    String[] columns = line.split("\\|");
+
+                    if(columns.length < 3) {
+                        continue;
+                    }
+
+                    // Headers line
+                    if("id".equals(columns[0])) {
+                        for(int i = 3; i < columns.length; i++) {
+                            keys.add(columns[i]);
+                        }
+                        continue;
+                    }
+
+                    String id = columns[0];
+                    String query = columns[1];
+                    int count = isNumeric(columns[2]) ? Integer.valueOf(columns[2]) : 1;
+
+                    queryUnits.add(new QueryUnit(id, query, count));
                 }
             }
+
+            return new QueryPackage(file, keys, queryUnits);
+        } catch (Throwable e) {
+            logger.log(Level.ERROR, String.format("Error parsing file %s", file));
+            throw new RuntimeException(e);
+        } finally {
+            LineIterator.closeQuietly(it);
         }
-        LineIterator.closeQuietly(it);
     }
 
     private void cleanup() {

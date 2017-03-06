@@ -18,7 +18,9 @@ package com.google.demo.analytics.benchmark;
 
 import com.google.demo.analytics.executor.BigQueryExecutor;
 import com.google.demo.analytics.model.BigQueryUnitResult;
+import com.google.demo.analytics.model.QueryPackage;
 import com.google.demo.analytics.model.QueryUnit;
+import com.google.demo.analytics.write.Writer;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -34,14 +36,15 @@ import static java.nio.file.StandardOpenOption.CREATE;
 
 public class BigQueryBenchmark extends Benchmark<BigQueryUnitResult> {
 
-    public BigQueryBenchmark(List<QueryUnit> queryUnits) {
-        super(queryUnits);
+    public BigQueryBenchmark(List<QueryPackage> queryPackages) {
+        super(queryPackages);
     }
 
     @Override
     protected Callable<List<BigQueryUnitResult>> getExecutor(QueryUnit queryUnit, Properties props) {
         String useStopwatch = props.getProperty("bq.stopwatch");
-        return new BigQueryExecutor(queryUnit, Boolean.parseBoolean(useStopwatch));
+        String useQueryCache = props.getProperty("bq.query.cache");
+        return new BigQueryExecutor(queryUnit, Boolean.parseBoolean(useStopwatch), Boolean.parseBoolean(useQueryCache));
     }
 
     @Override
@@ -58,40 +61,35 @@ public class BigQueryBenchmark extends Benchmark<BigQueryUnitResult> {
     protected QueryUnit getCheckConnectionQuery(Properties props) {
         return new QueryUnit(
                 "check",
-                1,
-                props.getProperty("bq.connection.check"));
+                props.getProperty("bq.connection.check"),
+                1);
     }
 
     @Override
-    protected void writeToOutput(List<BigQueryUnitResult> results, Path output) throws IOException {
+    protected void writeToOutput(List<BigQueryUnitResult> results, Writer writer) throws IOException {
         String headers = String.join(
                 DELIMITER,
+                "id",
+                "query",
                 "job_id",
                 "status",
-                "label",
                 "creation_time",
                 "duration_ms",
-                "query",
                 "error_messages");
 
-        Files.write(output, Arrays.asList(headers), UTF_8, APPEND, CREATE);
+        writer.write(Arrays.asList(headers));
 
         for(BigQueryUnitResult result : results) {
-            Files.write(
-                    output,
-                    Arrays.asList(
-                            String.join(
-                                    DELIMITER,
-                                    result.getJobId(),
-                                    result.getStatus().toString(),
-                                    result.getQueryUnit().getLabel(),
-                                    result.getCreationTime(),
-                                    result.getDuration(),
-                                    result.getQueryUnit().getQuery(),
-                                    result.getErrorMessage() == null ? "" : result.getErrorMessage())
-                    ),
-                    UTF_8,
-                    APPEND);
+            writer.write(Arrays.asList(
+                    String.join(
+                            DELIMITER,
+                            result.getQueryUnit().getId(),
+                            result.getQueryUnit().getQuery(),
+                            result.getJobId(),
+                            result.getStatus().toString(),
+                            result.getCreationTime(),
+                            result.getDuration(),
+                            result.getErrorMessage() == null ? "" : result.getErrorMessage())));
         }
     }
 }

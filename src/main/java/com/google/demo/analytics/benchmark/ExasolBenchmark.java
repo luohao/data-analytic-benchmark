@@ -16,6 +16,7 @@
 package com.google.demo.analytics.benchmark;
 
 import com.google.demo.analytics.executor.JDBCExecutor;
+import com.google.demo.analytics.model.QueryPackage;
 import com.google.demo.analytics.model.QueryUnit;
 import com.google.demo.analytics.model.QueryUnitResult;
 
@@ -27,8 +28,8 @@ public class ExasolBenchmark extends JDBCBenchmark {
 
     private static final String driverName = "com.exasol.jdbc.EXADriver";
 
-    public ExasolBenchmark(List<QueryUnit> queryUnits) {
-        super(queryUnits);
+    public ExasolBenchmark(List<QueryPackage> queryPackages) {
+        super(queryPackages);
     }
 
     @Override
@@ -53,7 +54,7 @@ public class ExasolBenchmark extends JDBCBenchmark {
     protected QueryUnit getCheckConnectionQuery(Properties props) {
         return new QueryUnit(
                 "check",
-                1,
-                props.getProperty("exasol.connection.check"));
+                props.getProperty("exasol.connection.check"),
+                1);
     }
 }

@@ -44,6 +44,8 @@ public abstract class JDBCBenchmark extends Benchmark<QueryUnitResult> {
             throws IOException {
         List<String> baseHeaders = new ArrayList<>(Arrays.asList(
                 "id",
+                "platform",
+                "description",
                 "query",
                 "status",
                 "duration_ms",
@@ -58,6 +60,8 @@ public abstract class JDBCBenchmark extends Benchmark<QueryUnitResult> {
         for(QueryUnitResult result : results) {
             List<String> baseValues = new ArrayList<>(Arrays.asList(
                     result.getQueryUnit().getId(),
+                    getEngineName(),
+                    queryPackage.getDescription(),
                     result.getQueryUnit().getQuery(),
                     result.getStatus().toString(),
                     result.getDuration(),

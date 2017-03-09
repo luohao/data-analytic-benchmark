@@ -35,12 +35,12 @@ import static java.nio.file.StandardOpenOption.CREATE;
 
 public abstract class JDBCBenchmark extends Benchmark<QueryUnitResult> {
 
-    public JDBCBenchmark(List<QueryPackage> queryPackages) {
-        super(queryPackages);
+    public JDBCBenchmark(List<String> keys, List<QueryPackage> queryPackages) {
+        super(keys, queryPackages);
     }
 
     @Override
-    protected void writeToOutput(QueryPackage queryPackage, List<QueryUnitResult> results, Writer writer)
+    protected void writeToOutput(List<QueryUnitResult> results, Writer writer)
             throws IOException {
         List<String> baseHeaders = new ArrayList<>(Arrays.asList(
                 "id",
@@ -52,7 +52,7 @@ public abstract class JDBCBenchmark extends Benchmark<QueryUnitResult> {
                 "error_messages"
         ));
 
-        baseHeaders.addAll(queryPackage.getKeys());
+        baseHeaders.addAll(getKeys());
         String headers = String.join(DELIMITER, baseHeaders);
 
         writer.write(Arrays.asList(headers));
@@ -61,7 +61,7 @@ public abstract class JDBCBenchmark extends Benchmark<QueryUnitResult> {
             List<String> baseValues = new ArrayList<>(Arrays.asList(
                     result.getQueryUnit().getId(),
                     getEngineName(),
-                    queryPackage.getDescription(),
+                    result.getQueryUnit().getDescription(),
                     result.getQueryUnit().getQuery(),
                     result.getStatus().toString(),
                     result.getDuration(),

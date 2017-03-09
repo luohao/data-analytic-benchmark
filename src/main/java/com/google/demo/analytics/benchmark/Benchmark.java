@@ -49,15 +49,17 @@ public abstract class Benchmark<T extends QueryUnitResult> {
     private String hdfsPath;
     private Properties props;
 
+    private List<String> keys;
     private List<QueryPackage> queryPackages;
 
-    public Benchmark(List<QueryPackage> queryPackages) {
+    public Benchmark(List<String> keys, List<QueryPackage> queryPackages) {
+        this.keys = keys;
         this.queryPackages = queryPackages;
         parseInput();
     }
 
     protected abstract Callable<List<T>> getExecutor(QueryUnit queryUnit, Properties props);
-    protected abstract void writeToOutput(QueryPackage queryPackage, List<T> results, Writer writer) throws IOException;
+    protected abstract void writeToOutput(List<T> results, Writer writer) throws IOException;
     public abstract String getEngineName();
     protected abstract QueryUnit getCheckConnectionQuery(Properties props);
 
@@ -69,42 +71,42 @@ public abstract class Benchmark<T extends QueryUnitResult> {
 
         ExecutorService executorService = Executors.newFixedThreadPool(threads);
 
+        List<Callable<List<T>>> callables = new ArrayList<>();
+
         for(QueryPackage queryPackage : queryPackages) {
             logger.log(Level.INFO, String.format(
                     "Running %s benchmark - %s",
                     getEngineName(),
                     queryPackage.getDescription()
             ));
-            List<Callable<List<T>>> callables = new ArrayList<>();
 
             for(QueryUnit queryUnit : queryPackage.getQueryUnits()) {
                 callables.add(getExecutor(queryUnit, props));
             }
-
-            List<T> results = new ArrayList<>();
-            try {
-                executorService.invokeAll(callables)
-                        .stream()
-                        .map(future -> {
-                            try {
-                                return future.get();
-                            }
-                            catch (Exception e) {
-                                throw new IllegalStateException(e);
-                            }
-                        })
-                        .forEach(i -> results.addAll(i));
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-
-            String baseName = queryPackage.getEngine() + "-" + queryPackage.getDescription();
-            String timestamp = new SimpleDateFormat("-YYYY-MM-dd_hh-mm-ss").format(new Date()).toString();
-            String fileName = baseName + timestamp + ".csv";
-
-            writeToOutput(queryPackage, results, new DefaultWriter(fileName));
-//            writeToOutput(queryPackage, results, new HDFSWriter(hdfsHost, hdfsPath + fileName));
         }
+
+        List<T> results = new ArrayList<>();
+        try {
+            executorService.invokeAll(callables)
+                    .stream()
+                    .map(future -> {
+                        try {
+                            return future.get();
+                        }
+                        catch (Exception e) {
+                            throw new IllegalStateException(e);
+                        }
+                    })
+                    .forEach(i -> results.addAll(i));
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        String timestamp = new SimpleDateFormat("-YYYY-MM-dd_hh-mm-ss").format(new Date()).toString();
+        String fileName = getEngineName() + timestamp + ".csv";
+
+        writeToOutput(results, new DefaultWriter(fileName));
+//            writeToOutput(queryPackage, results, new HDFSWriter(hdfsHost, hdfsPath + fileName));
 
         executorService.shutdown();
 
@@ -138,5 +140,9 @@ public abstract class Benchmark<T extends QueryUnitResult> {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    protected List<String> getKeys() {
+        return keys;
     }
 }

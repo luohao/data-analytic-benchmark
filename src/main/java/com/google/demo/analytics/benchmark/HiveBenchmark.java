@@ -32,8 +32,8 @@ public class HiveBenchmark extends JDBCBenchmark {
     public final static String ENGINE_NAME = "hive";
     private static final String driverName = "org.apache.hive.jdbc.HiveDriver";
 
-    public HiveBenchmark(List<QueryPackage> queryPackages) {
-        super(queryPackages);
+    public HiveBenchmark(List<String> keys, List<QueryPackage> queryPackages) {
+        super(keys, queryPackages);
     }
 
     @Override
@@ -53,6 +53,8 @@ public class HiveBenchmark extends JDBCBenchmark {
     protected QueryUnit getCheckConnectionQuery(Properties props) {
         return new QueryUnit(
                 "check",
+                getEngineName(),
+                "check-connection",
                 props.getProperty("hive.connection.check"),
                 1);
     }

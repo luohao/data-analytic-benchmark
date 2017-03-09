@@ -23,13 +23,11 @@ public class QueryPackage {
 
     private String engine;
     private String description;
-    private List<String> keys;
     private List<QueryUnit> queryUnits = new ArrayList<>();
 
-    public QueryPackage(String engine, String description, List<String> keys, List<QueryUnit> queryUnits) {
+    public QueryPackage(String engine, String description, List<QueryUnit> queryUnits) {
         this.engine = engine;
         this.description = description;
-        this.keys = keys;
         this.queryUnits = queryUnits;
     }
 
@@ -39,10 +37,6 @@ public class QueryPackage {
 
     public String getDescription() {
         return description;
-    }
-
-    public List<String> getKeys() {
-        return keys;
     }
 
     public List<QueryUnit> getQueryUnits() {

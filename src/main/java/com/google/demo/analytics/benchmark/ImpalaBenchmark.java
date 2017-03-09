@@ -30,8 +30,8 @@ public class ImpalaBenchmark extends JDBCBenchmark {
     public final static String ENGINE_NAME = "impala";
     private static final String driverName = "org.apache.hive.jdbc.HiveDriver";
 
-    public ImpalaBenchmark(List<QueryPackage> queryPackages) {
-        super(queryPackages);
+    public ImpalaBenchmark(List<String> keys, List<QueryPackage> queryPackages) {
+        super(keys, queryPackages);
     }
 
     @Override
@@ -51,6 +51,8 @@ public class ImpalaBenchmark extends JDBCBenchmark {
     protected QueryUnit getCheckConnectionQuery(Properties props) {
         return new QueryUnit(
                 "check",
+                getEngineName(),
+                "check-connection",
                 props.getProperty("impala.connection.check"),
                 1);
     }

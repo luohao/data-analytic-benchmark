@@ -39,8 +39,8 @@ public class BigQueryBenchmark extends Benchmark<BigQueryUnitResult> {
 
     public final static String ENGINE_NAME = "bq";
 
-    public BigQueryBenchmark(List<QueryPackage> queryPackages) {
-        super(queryPackages);
+    public BigQueryBenchmark(List<String> keys, List<QueryPackage> queryPackages) {
+        super(keys, queryPackages);
     }
 
     @Override
@@ -59,12 +59,14 @@ public class BigQueryBenchmark extends Benchmark<BigQueryUnitResult> {
     protected QueryUnit getCheckConnectionQuery(Properties props) {
         return new QueryUnit(
                 "check",
+                ENGINE_NAME,
+                "check-connection",
                 props.getProperty("bq.connection.check"),
                 1);
     }
 
     @Override
-    protected void writeToOutput(QueryPackage queryPackage, List<BigQueryUnitResult> results, Writer writer)
+    protected void writeToOutput(List<BigQueryUnitResult> results, Writer writer)
             throws IOException {
         List<String> baseHeaders = new ArrayList<>(Arrays.asList(
                 "id",
@@ -78,7 +80,7 @@ public class BigQueryBenchmark extends Benchmark<BigQueryUnitResult> {
                 "error_messages"
         ));
 
-        baseHeaders.addAll(queryPackage.getKeys());
+        baseHeaders.addAll(getKeys());
         String headers = String.join(DELIMITER, baseHeaders);
 
         writer.write(Arrays.asList(headers));
@@ -87,7 +89,7 @@ public class BigQueryBenchmark extends Benchmark<BigQueryUnitResult> {
             List<String> baseValues = new ArrayList<>(Arrays.asList(
                     result.getQueryUnit().getId(),
                     getEngineName(),
-                    queryPackage.getDescription(),
+                    result.getQueryUnit().getDescription(),
                     result.getQueryUnit().getQuery(),
                     result.getJobId(),
                     result.getStatus().toString(),

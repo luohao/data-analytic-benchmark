@@ -33,7 +33,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Main {
 
@@ -45,6 +47,8 @@ public class Main {
     private List<QueryPackage> hiveQueryPackages = new ArrayList<>();
     private List<QueryPackage> impalaQueryPackages = new ArrayList<>();
     private List<QueryPackage> exasolQueryPackages = new ArrayList<>();
+
+    private Map<String, List<String>> platformToKeys = new HashMap<>();
 
     public static void main(String[] args) {
         Main main = new Main();
@@ -60,10 +64,10 @@ public class Main {
             parseQueriesInput();
 
             List<Benchmark> benchmarks = new ArrayList<>();
-            benchmarks.add(new BigQueryBenchmark(bigQueryPackages));
-            benchmarks.add(new HiveBenchmark(hiveQueryPackages));
-            benchmarks.add(new ImpalaBenchmark(impalaQueryPackages));
-            benchmarks.add(new ExasolBenchmark(exasolQueryPackages));
+            benchmarks.add(new BigQueryBenchmark(platformToKeys.get(BigQueryBenchmark.ENGINE_NAME), bigQueryPackages));
+            benchmarks.add(new HiveBenchmark(platformToKeys.get(HiveBenchmark.ENGINE_NAME), hiveQueryPackages));
+            benchmarks.add(new ImpalaBenchmark(platformToKeys.get(ImpalaBenchmark.ENGINE_NAME), impalaQueryPackages));
+            benchmarks.add(new ExasolBenchmark(platformToKeys.get(ExasolBenchmark.ENGINE_NAME), exasolQueryPackages));
 
             runBenchmarks(checkConnections(benchmarks));
         } catch(Throwable throwable) {
@@ -132,6 +136,10 @@ public class Main {
             List<String> keys = new ArrayList<>();
             List<QueryUnit> queryUnits = new ArrayList<>();
 
+            String baseName = FilenameUtils.getBaseName(file.getFileName().toString());
+            String noPrefix = baseName.substring(prefix.length() + 1);
+            String description = noPrefix.substring(0, noPrefix.length());
+
             while(it.hasNext()) {
                 String line = it.next();
 
@@ -145,9 +153,15 @@ public class Main {
 
                     // Headers line
                     if("id".equals(columns[0])) {
+                        if(platformToKeys.containsKey(prefix)) {
+                            continue;
+                        }
+
                         for(int i = 3; i < columns.length; i++) {
                             keys.add(columns[i]);
                         }
+
+                        platformToKeys.put(prefix, keys);
                         continue;
                     }
 
@@ -160,15 +174,11 @@ public class Main {
                         values.add(columns[i]);
                     }
 
-                    queryUnits.add(new QueryUnit(id, query, count, values));
+                    queryUnits.add(new QueryUnit(id, prefix, description, query, count, values));
                 }
             }
 
-            String baseName = FilenameUtils.getBaseName(file.getFileName().toString());
-            String noPrefix = baseName.substring(prefix.length() + 1);
-            String description = noPrefix.substring(0, noPrefix.length());
-
-            return new QueryPackage(prefix, description, keys, queryUnits);
+            return new QueryPackage(prefix, description, queryUnits);
         } catch (Throwable e) {
             logger.log(Level.ERROR, String.format("Error parsing file %s", file));
             throw new RuntimeException(e);

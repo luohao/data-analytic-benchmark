@@ -22,16 +22,20 @@ import java.util.List;
 public class QueryUnit {
 
     private String id;
+    private String platform;
+    private String description;
     private String query;
     private int count;
     private List<String> values;
 
-    public QueryUnit(String id, String query, int count) {
-        this(id, query, count, new ArrayList<>());
+    public QueryUnit(String id, String platform, String description, String query, int count) {
+        this(id, platform, description, query, count, new ArrayList<>());
     }
 
-    public QueryUnit(String id, String query, int count, List<String> values) {
+    public QueryUnit(String id, String platform, String description, String query, int count, List<String> values) {
         this.id = id;
+        this.platform = platform;
+        this.description = description;
         this.query = query;
         this.count = count;
         this.values = values;
@@ -39,6 +43,14 @@ public class QueryUnit {
 
     public String getId() {
         return id;
+    }
+
+    public String getPlatform() {
+        return platform;
+    }
+
+    public String getDescription() {
+        return description;
     }
 
     public String getQuery() {

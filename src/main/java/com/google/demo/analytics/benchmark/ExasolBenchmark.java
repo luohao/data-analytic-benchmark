@@ -29,8 +29,8 @@ public class ExasolBenchmark extends JDBCBenchmark {
     public final static String ENGINE_NAME = "exasol";
     private static final String driverName = "com.exasol.jdbc.EXADriver";
 
-    public ExasolBenchmark(List<QueryPackage> queryPackages) {
-        super(queryPackages);
+    public ExasolBenchmark(List<String> keys, List<QueryPackage> queryPackages) {
+        super(keys, queryPackages);
     }
 
     @Override
@@ -50,6 +50,8 @@ public class ExasolBenchmark extends JDBCBenchmark {
     protected QueryUnit getCheckConnectionQuery(Properties props) {
         return new QueryUnit(
                 "check",
+                getEngineName(),
+                "check-connection",
                 props.getProperty("exasol.connection.check"),
                 1);
     }

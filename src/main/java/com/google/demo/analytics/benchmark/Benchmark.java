@@ -20,13 +20,18 @@ import com.google.demo.analytics.model.QueryPackage;
 import com.google.demo.analytics.model.QueryUnit;
 import com.google.demo.analytics.model.QueryUnitResult;
 import com.google.demo.analytics.write.DefaultWriter;
+import com.google.demo.analytics.write.HDFSWriter;
 import com.google.demo.analytics.write.Writer;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Callable;
@@ -40,6 +45,8 @@ public abstract class Benchmark<T extends QueryUnitResult> {
     public static final String DELIMITER = "|";
 
     private int threads = 1;
+    private String hdfsHost;
+    private String hdfsPath;
     private Properties props;
 
     private List<QueryPackage> queryPackages;
@@ -51,20 +58,23 @@ public abstract class Benchmark<T extends QueryUnitResult> {
 
     protected abstract Callable<List<T>> getExecutor(QueryUnit queryUnit, Properties props);
     protected abstract void writeToOutput(QueryPackage queryPackage, List<T> results, Writer writer) throws IOException;
-    public abstract String getFileOutputName();
     public abstract String getEngineName();
     protected abstract QueryUnit getCheckConnectionQuery(Properties props);
 
-    public void runQueries() throws IOException {
+    public void runQueries() throws IOException, URISyntaxException {
         if(queryPackages.isEmpty()) {
             logger.log(Level.INFO, String.format("Not queries to run for %s", getEngineName()));
             return;
         }
 
-        logger.log(Level.INFO, String.format("Running %s benchmark", getEngineName()));
         ExecutorService executorService = Executors.newFixedThreadPool(threads);
 
         for(QueryPackage queryPackage : queryPackages) {
+            logger.log(Level.INFO, String.format(
+                    "Running %s benchmark - %s",
+                    getEngineName(),
+                    queryPackage.getDescription()
+            ));
             List<Callable<List<T>>> callables = new ArrayList<>();
 
             for(QueryUnit queryUnit : queryPackage.getQueryUnits()) {
@@ -88,7 +98,12 @@ public abstract class Benchmark<T extends QueryUnitResult> {
                 throw new RuntimeException(e);
             }
 
-            writeToOutput(queryPackage, results, new DefaultWriter(queryPackage.getQueryFile()));
+            String baseName = queryPackage.getEngine() + "-" + queryPackage.getDescription();
+            String timestamp = new SimpleDateFormat("-YYYY-MM-dd_hh-mm-ss").format(new Date()).toString();
+            String fileName = baseName + timestamp + ".csv";
+
+            writeToOutput(queryPackage, results, new DefaultWriter(fileName));
+//            writeToOutput(queryPackage, results, new HDFSWriter(hdfsHost, hdfsPath + fileName));
         }
 
         executorService.shutdown();
@@ -97,8 +112,8 @@ public abstract class Benchmark<T extends QueryUnitResult> {
     }
 
     public void checkConnection() throws Exception {
-        for(T result : getExecutor(getCheckConnectionQuery(props), props).call()) {
-            if(QueryUnitResult.Status.FAIL.equals(result.getStatus())) {
+        for (T result : getExecutor(getCheckConnectionQuery(props), props).call()) {
+            if (QueryUnitResult.Status.FAIL.equals(result.getStatus())) {
                 throw new RuntimeException(
                         String.format(
                                 "Error checking the connection for %s. Error: %s",
@@ -117,6 +132,9 @@ public abstract class Benchmark<T extends QueryUnitResult> {
             if(threads != null) {
                 this.threads = Integer.parseInt(threads);
             }
+
+            hdfsHost = props.getProperty("hdfs.host");
+            hdfsPath = props.getProperty("hdfs.output.directory");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

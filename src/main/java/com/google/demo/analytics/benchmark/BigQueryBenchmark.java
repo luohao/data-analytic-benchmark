@@ -37,6 +37,8 @@ import static java.nio.file.StandardOpenOption.CREATE;
 
 public class BigQueryBenchmark extends Benchmark<BigQueryUnitResult> {
 
+    public final static String ENGINE_NAME = "bq";
+
     public BigQueryBenchmark(List<QueryPackage> queryPackages) {
         super(queryPackages);
     }
@@ -49,13 +51,8 @@ public class BigQueryBenchmark extends Benchmark<BigQueryUnitResult> {
     }
 
     @Override
-    public String getFileOutputName() {
-        return "bigquery-output.csv";
-    }
-
-    @Override
     public String getEngineName() {
-        return "BQ";
+        return ENGINE_NAME;
     }
 
     @Override
@@ -71,6 +68,8 @@ public class BigQueryBenchmark extends Benchmark<BigQueryUnitResult> {
             throws IOException {
         List<String> baseHeaders = new ArrayList<>(Arrays.asList(
                 "id",
+                "platform",
+                "description",
                 "query",
                 "job_id",
                 "status",
@@ -87,6 +86,8 @@ public class BigQueryBenchmark extends Benchmark<BigQueryUnitResult> {
         for(BigQueryUnitResult result : results) {
             List<String> baseValues = new ArrayList<>(Arrays.asList(
                     result.getQueryUnit().getId(),
+                    getEngineName(),
+                    queryPackage.getDescription(),
                     result.getQueryUnit().getQuery(),
                     result.getJobId(),
                     result.getStatus().toString(),
@@ -100,5 +101,7 @@ public class BigQueryBenchmark extends Benchmark<BigQueryUnitResult> {
 
             writer.write(Arrays.asList(values));
         }
+
+        writer.close();
     }
 }

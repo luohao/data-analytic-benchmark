@@ -32,15 +32,16 @@ public class DefaultWriter implements Writer {
 
     private Path output;
 
-    public DefaultWriter(Path queryFile) {
+    public DefaultWriter(String fileName) {
         String baseDirectory = DefaultWriter.class.getClassLoader().getResource("").getPath();
-        String filename = FilenameUtils.getBaseName(queryFile.getFileName().toString());
-        String timestamp = new SimpleDateFormat("-YYYY-MM-dd_hh-mm-ss'.txt'").format(new Date()).toString();
-        this.output = Paths.get(baseDirectory + filename + timestamp + ".csv");
+        this.output = Paths.get(baseDirectory + fileName);
     }
 
     @Override
-    public void write(Iterable<? extends CharSequence> lines) throws IOException {
-        Files.write(output, lines, UTF_8, APPEND, CREATE);
+    public void write(Iterable<? extends CharSequence> line) throws IOException {
+        Files.write(output, line, UTF_8, APPEND, CREATE);
     }
+
+    @Override
+    public void close() {}
 }

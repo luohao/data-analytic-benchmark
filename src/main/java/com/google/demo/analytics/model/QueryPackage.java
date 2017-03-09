@@ -21,18 +21,24 @@ import java.util.List;
 
 public class QueryPackage {
 
-    private Path queryFile;
+    private String engine;
+    private String description;
     private List<String> keys;
     private List<QueryUnit> queryUnits = new ArrayList<>();
 
-    public QueryPackage(Path queryFile, List<String> keys, List<QueryUnit> queryUnits) {
-        this.queryFile = queryFile;
+    public QueryPackage(String engine, String description, List<String> keys, List<QueryUnit> queryUnits) {
+        this.engine = engine;
+        this.description = description;
         this.keys = keys;
         this.queryUnits = queryUnits;
     }
 
-    public Path getQueryFile() {
-        return queryFile;
+    public String getEngine() {
+        return engine;
+    }
+
+    public String getDescription() {
+        return description;
     }
 
     public List<String> getKeys() {

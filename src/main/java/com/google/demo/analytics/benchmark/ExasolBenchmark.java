@@ -26,6 +26,7 @@ import java.util.concurrent.Callable;
 
 public class ExasolBenchmark extends JDBCBenchmark {
 
+    public final static String ENGINE_NAME = "exasol";
     private static final String driverName = "com.exasol.jdbc.EXADriver";
 
     public ExasolBenchmark(List<QueryPackage> queryPackages) {
@@ -41,13 +42,8 @@ public class ExasolBenchmark extends JDBCBenchmark {
     }
 
     @Override
-    public String getFileOutputName() {
-        return "exasol-output.csv";
-    }
-
-    @Override
     public String getEngineName() {
-        return "Exasol";
+        return ENGINE_NAME;
     }
 
     @Override

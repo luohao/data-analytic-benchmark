@@ -20,6 +20,7 @@ import com.google.demo.analytics.benchmark.*;
 import com.google.demo.analytics.model.QueryPackage;
 import com.google.demo.analytics.model.QueryUnit;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -27,6 +28,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -36,6 +38,8 @@ import java.util.List;
 public class Main {
 
     private Logger logger = LogManager.getLogger();
+
+    private static final String TEXT_EXTENSION = ".txt";
 
     private List<QueryPackage> bigQueryPackages = new ArrayList<>();
     private List<QueryPackage> hiveQueryPackages = new ArrayList<>();
@@ -85,11 +89,8 @@ public class Main {
         return results;
     }
 
-    private void runBenchmarks(List<Benchmark> benchmarks) throws IOException {
+    private void runBenchmarks(List<Benchmark> benchmarks) throws IOException, URISyntaxException {
         for(Benchmark benchmark : benchmarks) {
-            String path = Main.class.getClassLoader().getResource("").getPath() + benchmark.getFileOutputName();
-            Path output = Paths.get(path);
-
             benchmark.runQueries();
         }
     }
@@ -103,27 +104,23 @@ public class Main {
         Files.list(resources)
                 .filter(Files::isRegularFile)
                 .forEach(file -> {
-                    if(file.getFileName().toString().startsWith("bq")
-                            && file.getFileName().toString().endsWith(".txt")) {
-                        logger.log(Level.INFO, String.format("Parsing file %s", file.getFileName()));
-                        bigQueryPackages.add(getQueryPackage(file));
-                    } else if(file.getFileName().toString().startsWith("hive")
-                            && file.getFileName().toString().endsWith(".txt")) {
-                        logger.log(Level.INFO, String.format("Parsing file %s", file.getFileName()));
-                        hiveQueryPackages.add(getQueryPackage(file));
-                    } else if(file.getFileName().toString().startsWith("impala")
-                            && file.getFileName().toString().endsWith(".txt")) {
-                        logger.log(Level.INFO, String.format("Parsing file %s", file.getFileName()));
-                        impalaQueryPackages.add(getQueryPackage(file));
-                    } else if(file.getFileName().toString().startsWith("exasol")
-                            && file.getFileName().toString().endsWith(".txt")) {
-                        logger.log(Level.INFO, String.format("Parsing file %s", file.getFileName()));
-                        exasolQueryPackages.add(getQueryPackage(file));
+                    if(file.getFileName().toString().startsWith(BigQueryBenchmark.ENGINE_NAME)
+                            && file.getFileName().toString().endsWith(TEXT_EXTENSION)) {
+                        bigQueryPackages.add(getQueryPackage(file, BigQueryBenchmark.ENGINE_NAME));
+                    } else if(file.getFileName().toString().startsWith(HiveBenchmark.ENGINE_NAME)
+                            && file.getFileName().toString().endsWith(TEXT_EXTENSION)) {
+                        hiveQueryPackages.add(getQueryPackage(file, HiveBenchmark.ENGINE_NAME));
+                    } else if(file.getFileName().toString().startsWith(ImpalaBenchmark.ENGINE_NAME)
+                            && file.getFileName().toString().endsWith(TEXT_EXTENSION)) {
+                        impalaQueryPackages.add(getQueryPackage(file, ImpalaBenchmark.ENGINE_NAME));
+                    } else if(file.getFileName().toString().startsWith(ExasolBenchmark.ENGINE_NAME)
+                            && file.getFileName().toString().endsWith(TEXT_EXTENSION)) {
+                        exasolQueryPackages.add(getQueryPackage(file, ExasolBenchmark.ENGINE_NAME));
                     }
                 });
     }
 
-    private QueryPackage getQueryPackage(Path file) {
+    private QueryPackage getQueryPackage(Path file, String prefix) {
         logger.log(Level.INFO, String.format("Parsing file %s", file.getFileName()));
         LineIterator it = null;
         try {
@@ -167,7 +164,11 @@ public class Main {
                 }
             }
 
-            return new QueryPackage(file, keys, queryUnits);
+            String baseName = FilenameUtils.getBaseName(file.getFileName().toString());
+            String noPrefix = baseName.substring(prefix.length() + 1);
+            String description = noPrefix.substring(0, noPrefix.length());
+
+            return new QueryPackage(prefix, description, keys, queryUnits);
         } catch (Throwable e) {
             logger.log(Level.ERROR, String.format("Error parsing file %s", file));
             throw new RuntimeException(e);

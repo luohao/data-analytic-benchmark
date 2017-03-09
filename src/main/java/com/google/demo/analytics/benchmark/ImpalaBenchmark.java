@@ -27,6 +27,7 @@ import java.util.concurrent.Callable;
 
 public class ImpalaBenchmark extends JDBCBenchmark {
 
+    public final static String ENGINE_NAME = "impala";
     private static final String driverName = "org.apache.hive.jdbc.HiveDriver";
 
     public ImpalaBenchmark(List<QueryPackage> queryPackages) {
@@ -42,13 +43,8 @@ public class ImpalaBenchmark extends JDBCBenchmark {
     }
 
     @Override
-    public String getFileOutputName() {
-        return "impala-output.csv";
-    }
-
-    @Override
     public String getEngineName() {
-        return "Impala";
+        return ENGINE_NAME;
     }
 
     @Override

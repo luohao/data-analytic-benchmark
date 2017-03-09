@@ -29,6 +29,7 @@ import java.util.concurrent.Callable;
 
 public class HiveBenchmark extends JDBCBenchmark {
 
+    public final static String ENGINE_NAME = "hive";
     private static final String driverName = "org.apache.hive.jdbc.HiveDriver";
 
     public HiveBenchmark(List<QueryPackage> queryPackages) {
@@ -44,13 +45,8 @@ public class HiveBenchmark extends JDBCBenchmark {
     }
 
     @Override
-    public String getFileOutputName() {
-        return "hive-output.csv";
-    }
-
-    @Override
     public String getEngineName() {
-        return "Hive";
+        return ENGINE_NAME;
     }
 
     @Override

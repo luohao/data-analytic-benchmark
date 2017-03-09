@@ -69,5 +69,7 @@ public abstract class JDBCBenchmark extends Benchmark<QueryUnitResult> {
 
             writer.write(Arrays.asList(values));
         }
+
+        writer.close();
     }
 }

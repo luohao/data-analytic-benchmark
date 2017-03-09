@@ -19,5 +19,7 @@ import java.io.IOException;
 
 public interface Writer {
 
-    void write(Iterable<? extends CharSequence> lines) throws IOException;
+    void write(Iterable<? extends CharSequence> line) throws IOException;
+
+    void close() throws IOException;
 }

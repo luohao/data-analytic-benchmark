@@ -45,9 +45,6 @@ public class BigQueryExecutor implements Callable<List<BigQueryUnitResult>> {
         this.queryUnit = queryUnit;
         this.useStopWatch = useStopWatch;
         this.useQueryCache = useQueryCache;
-
-        logger.log(Level.INFO, String.format("Using stopwatch = %s", useStopWatch));
-        logger.log(Level.INFO, String.format("Using cache = %s", useQueryCache));
     }
 
     @Override
@@ -68,6 +65,7 @@ public class BigQueryExecutor implements Callable<List<BigQueryUnitResult>> {
 
         StopWatch stopWatch = new StopWatch();
         QueryResponse response = bigquery.query(request);
+
         // Wait for things to finish
         while (!response.jobCompleted()) {
             try {

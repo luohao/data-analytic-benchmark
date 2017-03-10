@@ -48,8 +48,6 @@ public class JDBCExecutor implements Callable<List<QueryUnitResult>> {
 
     @Override
     public List<QueryUnitResult> call() throws Exception {
-        logger.log(Level.INFO, Thread.currentThread().getName());
-
         List<QueryUnitResult> results = new ArrayList<>();
         for(int i = 0; i < queryUnit.getCount(); i++) {
             results.add(executeOnce(queryUnit));
@@ -58,6 +56,12 @@ public class JDBCExecutor implements Callable<List<QueryUnitResult>> {
     }
 
     private QueryUnitResult executeOnce(QueryUnit queryUnit) {
+        logger.log(Level.INFO, String.format(
+                "%s - ID = %s - %s",
+                Thread.currentThread().getName(),
+                queryUnit.getId(),
+                queryUnit.getDescription()));
+
         Connection cnct = null;
         try {
             Class.forName(driverName);

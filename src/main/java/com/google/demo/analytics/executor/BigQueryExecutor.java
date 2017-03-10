@@ -49,8 +49,6 @@ public class BigQueryExecutor implements Callable<List<BigQueryUnitResult>> {
 
     @Override
     public List<BigQueryUnitResult> call() throws Exception {
-        logger.log(Level.INFO, Thread.currentThread().getName());
-
         List<BigQueryUnitResult> results = new ArrayList<>();
         for(int i = 0; i < queryUnit.getCount(); i++) {
             results.add(executeOnce(queryUnit));
@@ -62,6 +60,12 @@ public class BigQueryExecutor implements Callable<List<BigQueryUnitResult>> {
         QueryRequest request = QueryRequest.newBuilder(queryUnit.getQuery())
                 .setUseQueryCache(useQueryCache)
                 .build();
+
+        logger.log(Level.INFO, String.format(
+                "%s - ID = %s - %s",
+                Thread.currentThread().getName(),
+                queryUnit.getId(),
+                queryUnit.getDescription()));
 
         StopWatch stopWatch = new StopWatch();
         QueryResponse response = bigquery.query(request);

@@ -22,6 +22,7 @@ import com.google.demo.analytics.model.QueryUnitResult;
 import com.google.demo.analytics.write.DefaultWriter;
 import com.google.demo.analytics.write.HDFSWriter;
 import com.google.demo.analytics.write.Writer;
+import edu.emory.mathcs.backport.java.util.Collections;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -73,17 +74,16 @@ public abstract class Benchmark<T extends QueryUnitResult> {
 
         List<Callable<List<T>>> callables = new ArrayList<>();
 
-        for(QueryPackage queryPackage : queryPackages) {
-            logger.log(Level.INFO, String.format(
-                    "Running %s benchmark - %s",
-                    getEngineName(),
-                    queryPackage.getDescription()
-            ));
+        logger.log(Level.INFO, String.format("Running %s benchmark", getEngineName()));
 
+        for(QueryPackage queryPackage : queryPackages) {
             for(QueryUnit queryUnit : queryPackage.getQueryUnits()) {
                 callables.add(getExecutor(queryUnit, props));
             }
         }
+
+        //Shuffle the QueryUnits
+        Collections.shuffle(callables);
 
         List<T> results = new ArrayList<>();
         try {

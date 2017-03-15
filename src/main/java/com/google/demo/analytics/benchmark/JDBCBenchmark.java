@@ -48,6 +48,8 @@ public abstract class JDBCBenchmark extends Benchmark<QueryUnitResult> {
                 "description",
                 "query",
                 "status",
+                "start_time",
+                "end_time",
                 "duration_ms",
                 "error_messages"
         ));
@@ -64,6 +66,8 @@ public abstract class JDBCBenchmark extends Benchmark<QueryUnitResult> {
                     result.getQueryUnit().getDescription(),
                     result.getQueryUnit().getQuery(),
                     result.getStatus().toString(),
+                    result.getStart(),
+                    result.getEnd(),
                     result.getDuration(),
                     result.getErrorMessage() == null ? "" : result.getErrorMessage()
             ));

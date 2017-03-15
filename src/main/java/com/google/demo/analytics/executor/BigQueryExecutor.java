@@ -24,6 +24,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -33,6 +34,8 @@ import java.util.stream.Collectors;
 public class BigQueryExecutor implements Callable<List<BigQueryUnitResult>> {
 
     private Logger logger = LogManager.getLogger();
+
+    SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd_hh-mm-ss-SSS");
 
     private BigQuery bigquery =
             new BigQueryOptions.DefaultBigqueryFactory().create(BigQueryOptions.getDefaultInstance());
@@ -81,11 +84,6 @@ public class BigQueryExecutor implements Callable<List<BigQueryUnitResult>> {
         }
         long duration = stopWatch.elapsedTime();
 
-        JobStatistics statistics = bigquery.getJob(response.getJobId()).getStatistics();
-        long creationTime = statistics.getCreationTime();
-        long startTime = statistics.getStartTime();
-        long endTime = statistics.getEndTime();
-
         if (response.hasErrors()) {
             String errors = response.getExecutionErrors()
                     .stream()
@@ -94,10 +92,13 @@ public class BigQueryExecutor implements Callable<List<BigQueryUnitResult>> {
                     queryUnit,
                     response.getJobId().toString(),
                     errors,
-                    new Date(creationTime).toString());
+                    new Date(stopWatch.getStart()).toString());
         }
 
         if(!useStopWatch) {
+            JobStatistics statistics = bigquery.getJob(response.getJobId()).getStatistics();
+            long startTime = statistics.getStartTime();
+            long endTime = statistics.getEndTime();
             duration = (endTime - startTime);
         }
 
@@ -115,6 +116,7 @@ public class BigQueryExecutor implements Callable<List<BigQueryUnitResult>> {
                 queryUnit,
                 response.getJobId().getJob(),
                 String.valueOf(duration),
-                new Date(creationTime).toString());
+                sdf.format(new Date(stopWatch.getStart())).toString(),
+                sdf.format(new Date(stopWatch.getEnd())).toString());
     }
 }

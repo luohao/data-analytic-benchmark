@@ -26,20 +26,25 @@ public class QueryUnitResult {
     private Status status;
     private String duration;
     private String errorMessage;
+    private String start;
+    private String end;
 
-    public QueryUnitResult(QueryUnit queryUnit, Status status, String duration, String errorMessage) {
+    public QueryUnitResult(
+            QueryUnit queryUnit, Status status, String duration, String errorMessage, String start, String end) {
         this.queryUnit = queryUnit;
         this.status = status;
         this.duration = duration;
         this.errorMessage = errorMessage;
+        this.start = start;
+        this.end = end;
     }
 
-    public static QueryUnitResult createSuccess(QueryUnit queryUnit, String duration) {
-        return new QueryUnitResult(queryUnit, Status.SUCCESS, duration, null);
+    public static QueryUnitResult createSuccess(QueryUnit queryUnit, String duration, String start, String end) {
+        return new QueryUnitResult(queryUnit, Status.SUCCESS, duration, null, start, end);
     }
 
-    public static QueryUnitResult createFail(QueryUnit queryUnit, String errorMessage) {
-        return new QueryUnitResult(queryUnit, Status.FAIL, null, errorMessage);
+    public static QueryUnitResult createFail(QueryUnit queryUnit, String errorMessage, String start) {
+        return new QueryUnitResult(queryUnit, Status.FAIL, null, errorMessage, start, null);
     }
 
     public QueryUnit getQueryUnit() {
@@ -56,5 +61,13 @@ public class QueryUnitResult {
 
     public String getErrorMessage() {
         return errorMessage;
+    }
+
+    public String getStart() {
+        return start;
+    }
+
+    public String getEnd() {
+        return end;
     }
 }

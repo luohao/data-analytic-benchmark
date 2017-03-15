@@ -23,13 +23,16 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.sql.Date;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 public class JDBCExecutor implements Callable<List<QueryUnitResult>> {
 
     private Logger logger = LogManager.getLogger();
+
+    SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd_hh-mm-ss-SSS");
 
     private QueryUnit queryUnit;
 
@@ -63,22 +66,28 @@ public class JDBCExecutor implements Callable<List<QueryUnitResult>> {
                 queryUnit.getDescription()));
 
         Connection cnct = null;
+        StopWatch stopWatch = null;
         try {
             Class.forName(driverName);
             cnct = DriverManager.getConnection(connectionUrl, user, password);
             Statement stmt = cnct.createStatement();
 
-            StopWatch stopWatch = new StopWatch();
+            stopWatch = new StopWatch();
             ResultSet res = stmt.executeQuery(queryUnit.getQuery());
             long duration = stopWatch.elapsedTime();
 //            while (res.next()) {
 //                logger.log(Level.INFO, res.getString(1));
 //            }
 
-            return QueryUnitResult.createSuccess(queryUnit, String.valueOf(duration));
+            return QueryUnitResult.createSuccess(
+                    queryUnit,
+                    String.valueOf(duration),
+                    sdf.format(new java.util.Date(stopWatch.getStart())).toString(),
+                    sdf.format(new java.util.Date(stopWatch.getEnd())).toString());
         } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
-            return QueryUnitResult.createFail(queryUnit, e.getMessage());
+            String start = stopWatch != null ? sdf.format(new java.util.Date(stopWatch.getStart())).toString() : null;
+            return QueryUnitResult.createFail(queryUnit, e.getMessage(), start);
         } finally {
             try {
                 if(cnct != null) {

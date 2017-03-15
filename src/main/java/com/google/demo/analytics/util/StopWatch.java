@@ -18,7 +18,8 @@ package com.google.demo.analytics.util;
 
 public class StopWatch {
 
-    private final long start;
+    private long start;
+    private long end;
 
     public StopWatch() {
         start = System.currentTimeMillis();
@@ -31,7 +32,15 @@ public class StopWatch {
      * @return elapsed CPU time (in ms) since the stopwatch was created
      */
     public long elapsedTime() {
-        long now = System.currentTimeMillis();
-        return now - start;
+        end = System.currentTimeMillis();
+        return end - start;
+    }
+
+    public long getStart() {
+        return start;
+    }
+
+    public long getEnd() {
+        return end;
     }
 }

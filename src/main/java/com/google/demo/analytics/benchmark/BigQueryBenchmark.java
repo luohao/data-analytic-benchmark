@@ -75,7 +75,8 @@ public class BigQueryBenchmark extends Benchmark<BigQueryUnitResult> {
                 "query",
                 "job_id",
                 "status",
-                "creation_time",
+                "start_time",
+                "end_time",
                 "duration_ms",
                 "error_messages"
         ));
@@ -93,7 +94,8 @@ public class BigQueryBenchmark extends Benchmark<BigQueryUnitResult> {
                     result.getQueryUnit().getQuery(),
                     result.getJobId(),
                     result.getStatus().toString(),
-                    result.getCreationTime(),
+                    result.getStart(),
+                    result.getEnd(),
                     result.getDuration(),
                     result.getErrorMessage() == null ? "" : result.getErrorMessage()
             ));

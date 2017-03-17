@@ -85,7 +85,12 @@ public class JDBCExecutor implements Callable<List<QueryUnitResult>> {
                     sdf.format(new java.util.Date(stopWatch.getStart())).toString(),
                     sdf.format(new java.util.Date(stopWatch.getEnd())).toString());
         } catch (SQLException | ClassNotFoundException e) {
-            e.printStackTrace();
+            logger.log(Level.ERROR, String.format(
+                    "%s - ID = %s - %s: %s",
+                    Thread.currentThread().getName(),
+                    queryUnit.getId(),
+                    queryUnit.getDescription(),
+                    e.getMessage()));
             String start = stopWatch != null ? sdf.format(new java.util.Date(stopWatch.getStart())).toString() : null;
             return QueryUnitResult.createFail(queryUnit, e.getMessage(), start);
         } finally {

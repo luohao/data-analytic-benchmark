@@ -88,6 +88,14 @@ public class BigQueryExecutor implements Callable<List<BigQueryUnitResult>> {
             String errors = response.getExecutionErrors()
                     .stream()
                     .map(i -> i.toString()).collect(Collectors.joining(","));
+
+            logger.log(Level.ERROR, String.format(
+                    "%s - ID = %s - %s: %s",
+                    Thread.currentThread().getName(),
+                    queryUnit.getId(),
+                    queryUnit.getDescription(),
+                    errors));
+
             return BigQueryUnitResult.createFail(
                     queryUnit,
                     response.getJobId().toString(),

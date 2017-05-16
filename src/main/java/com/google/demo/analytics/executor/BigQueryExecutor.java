@@ -91,14 +91,10 @@ public class BigQueryExecutor implements Callable<List<BigQueryUnitResult>> {
         try {
             Job queryJob = bigquery.create(JobInfo.newBuilder(queryConfig).setJobId(jobId).build());
 
-            logger.log(Level.INFO, "About to run query");
-
             // Wait for the query to complete.
             queryJob = queryJob.waitFor(
                     WaitForOption.checkEvery(1, TimeUnit.SECONDS),
                     WaitForOption.timeout(Long.MAX_VALUE, TimeUnit.SECONDS));
-
-            logger.log(Level.INFO, "Completed query");
 
             // Check for errors
             if (queryJob == null) {

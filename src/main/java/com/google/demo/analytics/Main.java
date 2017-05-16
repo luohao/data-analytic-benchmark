@@ -70,6 +70,7 @@ public class Main {
             benchmarks.add(new ExasolBenchmark(platformToKeys.get(ExasolBenchmark.ENGINE_NAME), exasolQueryPackages));
 
             runBenchmarks(checkConnections(benchmarks));
+            System.exit(0);
         } catch(Throwable throwable) {
             logger.log(Level.ERROR, throwable);
             throwable.printStackTrace();

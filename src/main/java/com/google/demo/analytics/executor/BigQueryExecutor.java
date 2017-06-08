@@ -46,14 +46,16 @@ public class BigQueryExecutor implements Callable<List<BigQueryUnitResult>> {
     private QueryUnit queryUnit;
     private boolean useStopWatch;
     private boolean useQueryCache;
+    private String projectId;
 
-    public BigQueryExecutor(QueryUnit queryUnit, boolean useStopWatch, boolean useQueryCache) {
+    public BigQueryExecutor(QueryUnit queryUnit, boolean useStopWatch, boolean useQueryCache, String projectId) {
         this.queryUnit = queryUnit;
         this.useStopWatch = useStopWatch;
         this.useQueryCache = useQueryCache;
+        this.projectId = projectId;
 //        bigquery = new BigQueryOptions.DefaultBigqueryFactory().create(BigQueryOptions.getDefaultInstance());
 
-        BigQueryOptions options = BigQueryOptions.newBuilder().setProjectId("da-core-research").build();
+        BigQueryOptions options = BigQueryOptions.newBuilder().setProjectId(projectId).build();
         bigquery = new BigQueryOptions.DefaultBigqueryFactory().create(options);
     }
 

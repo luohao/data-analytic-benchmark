@@ -47,7 +47,12 @@ public class BigQueryBenchmark extends Benchmark<BigQueryUnitResult> {
     protected Callable<List<BigQueryUnitResult>> getExecutor(QueryUnit queryUnit, Properties props) {
         String useStopwatch = props.getProperty("bq.stopwatch");
         String useQueryCache = props.getProperty("bq.query.cache");
-        return new BigQueryExecutor(queryUnit, Boolean.parseBoolean(useStopwatch), Boolean.parseBoolean(useQueryCache));
+        String projectId = props.getProperty("bq.projectId");
+        return new BigQueryExecutor(
+                queryUnit,
+                Boolean.parseBoolean(useStopwatch),
+                Boolean.parseBoolean(useQueryCache),
+                projectId);
     }
 
     @Override

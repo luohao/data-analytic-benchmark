@@ -1,5 +1,0 @@
-# ID, query and repetition_count are mandatory. The rest will be copied to the corresponding line in the output file
-
-id|query|repetition_count|iteration|other_key|n_key
-
-1|select * from exa_syscat;|1|1|other_value|n_value

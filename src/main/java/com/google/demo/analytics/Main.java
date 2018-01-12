@@ -43,10 +43,13 @@ public class Main {
 
     private static final String TEXT_EXTENSION = ".txt";
 
+    // TODO: enable other benchmarks when we have the setup ready
+
     private List<QueryPackage> bigQueryPackages = new ArrayList<>();
     private List<QueryPackage> hiveQueryPackages = new ArrayList<>();
     private List<QueryPackage> impalaQueryPackages = new ArrayList<>();
     private List<QueryPackage> exasolQueryPackages = new ArrayList<>();
+    private List<QueryPackage> prestoQueryPackages = new ArrayList<>();
 
     private Map<String, List<String>> platformToKeys = new HashMap<>();
 
@@ -68,6 +71,7 @@ public class Main {
             benchmarks.add(new HiveBenchmark(platformToKeys.get(HiveBenchmark.ENGINE_NAME), hiveQueryPackages));
             benchmarks.add(new ImpalaBenchmark(platformToKeys.get(ImpalaBenchmark.ENGINE_NAME), impalaQueryPackages));
             benchmarks.add(new ExasolBenchmark(platformToKeys.get(ExasolBenchmark.ENGINE_NAME), exasolQueryPackages));
+            benchmarks.add(new PrestoBenchmark(platformToKeys.get(PrestoBenchmark.ENGINE_NAME), prestoQueryPackages));
 
             runBenchmarks(checkConnections(benchmarks));
             System.exit(0);
@@ -121,6 +125,9 @@ public class Main {
                     } else if(file.getFileName().toString().startsWith(ExasolBenchmark.ENGINE_NAME)
                             && file.getFileName().toString().endsWith(TEXT_EXTENSION)) {
                         exasolQueryPackages.add(getQueryPackage(file, ExasolBenchmark.ENGINE_NAME));
+                    } else if(file.getFileName().toString().startsWith(PrestoBenchmark.ENGINE_NAME)
+                            && file.getFileName().toString().endsWith(TEXT_EXTENSION)) {
+                        prestoQueryPackages.add(getQueryPackage(file, PrestoBenchmark.ENGINE_NAME));
                     }
                 });
     }
